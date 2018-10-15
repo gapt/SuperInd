@@ -231,4 +231,10 @@ BOOL has_copy_flip_just(Topform c);
 
 void sb_tagged_write_just(String_buf sb, Just just, I3list map);
 
+/**********************************************MODIF***********/
+BOOL iflat(int I, Topform c);
+Plist get_clause_ancestors_ofrank(Topform c, int rank);
+Plist get_ancestor_of_rank(int I, Plist EmptyCl);
+Plist get_ancestors_of_rank2(int I, Plist EmptyCl,BOOL index_flat);
+Plist get_clause_ancestors_ofrank2(Topform c, int rank, BOOL index_flat);
 #endif  /* conditional compilation of whole file */

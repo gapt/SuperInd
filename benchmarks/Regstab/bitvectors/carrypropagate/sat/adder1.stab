@@ -1,0 +1,14 @@
+// Prove that A+0=A with a *carry-propagate* adder 
+//expected: sat
+
+let Propagate(i) := A_i \/ B_i in
+let Generate(i)  := A_i /\ B_i in
+let Carry(i)     := C_i+1 <-> (Generate(i) \/ Propagate(i) /\ C_i) in
+let Sum(i)       := S_i <-> (A_i (+) B_i (+) C_i) in
+let Adder        := /\i=1..n (Sum(i) /\ Carry(i)) /\ ~C_1 in
+let NullB        := /\i=1..n ~B_i in
+let Conclusion   := /\i=1..n (A_i <-> S_i) in
+
+Adder() /\ NullB() | n>=5
+
+// vim:ft=regstab

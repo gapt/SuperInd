@@ -1,0 +1,9 @@
+set(prolog_style_variables).
+
+formulas(sos).
+p(0,f(a,b)).
+-p(X,f(Y,Z)) | p(s(X),f(Z,Y)) | p(s(X),f(Y,Z)). 
+N(X) | -p(X,f(a,Z)) .
+N(X) | -p(X,f(Z,a)) .
+end_of_list.
+

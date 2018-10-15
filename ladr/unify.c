@@ -238,6 +238,7 @@ context c1 is different from variable v1 in context c2.)
 */
 
 /* PUBLIC */
+/* Ajouter si param()*/
 BOOL unify(Term t1, Context c1,
 	   Term t2, Context c2, Trail *trp)
 {

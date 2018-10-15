@@ -1,0 +1,96 @@
+%  Associativity of the ripple-carry adder
+%	============================== PROOF =================================
+%	
+%	% Proof 1 at 1.73 (+ 0.07) seconds.
+%	% Given clauses 3734.
+%	
+%	% number of calls to fixpoint : 4 
+%	 S_init  : 
+%	 (130:  [ S1(v0) if  n = s(v0) ].
+%	135:  [ S2(v0) if  n = s(v0) ].
+%	136:  [ S3(v0) if  n = s(v0) ].
+%	137:  [ S4(v0) if  n = s(v0) ].
+%	790:  [ S5(v0) | -$C2P$(v0) | -$C$(v0) | $C2$(v0) | $C1$(v0) if  n = s(v0) ].
+%	792:  [ S5(v0) | -$C2P$(v0) | $C$(v0) | $C2$(v0) | -$C1$(v0) if  n = s(v0) ].
+%	793:  [ S5(v0) | $C2P$(v0) | -$C$(v0) | -$C2$(v0) | $C1$(v0) if  n = s(v0) ].
+%	795:  [ S5(v0) | $C2P$(v0) | $C$(v0) | -$C2$(v0) | -$C1$(v0) if  n = s(v0) ].
+%	797:  [ S5(v0) | $C2P$(v0) | $C$(v0) | $C2$(v0) | $C1$(v0) if  n = s(v0) ].
+%	789:  [ S5(v0) | -$C2P$(v0) | -$C$(v0) | -$C2$(v0) | -$C1$(v0) if  n = s(v0) ].
+%	) 
+%	 S_loop  : 
+%	 (2700:  [ S5(v0) | -$C2P$(v0) | -$C$(v0) | -$C2$(v0) | -$C1$(v0) if  n = s(s(v0)) ].
+%	2703:  [ S5(v0) | $C2P$(v0) | $C$(v0) | $C2$(v0) | $C1$(v0) if  n = s(s(v0)) ].
+%	2701:  [ S5(v0) | $C2P$(v0) | $C$(v0) | -$C2$(v0) | -$C1$(v0) if  n = s(s(v0)) ].
+%	2699:  [ S5(v0) | $C2P$(v0) | -$C$(v0) | -$C2$(v0) | $C1$(v0) if  n = s(s(v0)) ].
+%	2698:  [ S5(v0) | -$C2P$(v0) | $C$(v0) | $C2$(v0) | -$C1$(v0) if  n = s(s(v0)) ].
+%	2697:  [ S5(v0) | -$C2P$(v0) | -$C$(v0) | $C2$(v0) | $C1$(v0) if  n = s(s(v0)) ].
+%	826:  [ S4(v0) if  n = s(s(v0)) ].
+%	813:  [ S3(v0) if  n = s(s(v0)) ].
+%	812:  [ S2(v0) if  n = s(s(v0)) ].
+%	811:  [ S1(v0) if  n = s(s(v0)) ].
+%	) 
+%	 The empty clauses  : 
+%	 (142:  [  n = 0 ].
+%	845:  [  n = s(0) ].
+%	2747:  [  n = s(s(0)) ].
+%	) max_rank 3 
+%	
+%	============================== end of proof ==========================
+%	
+%	============================== STATISTICS ============================
+%	
+%	Given=3734. Generated=142527. Kept=4499. proofs=1.
+%	Usable=2213. Sos=40. Demods=0. Limbo=0, Disabled=2365. Hints=0.
+%	Kept_by_rule=0, Deleted_by_rule=0.
+%	Forward_subsumed=135844. Back_subsumed=2246.
+%	Sos_limit_deleted=0. Sos_displaced=0. Sos_removed=0.
+%	New_demodulators=0 (0 lex), Back_demodulated=0. Back_unit_deleted=0.
+%	Demod_attempts=0. Demod_rewrites=0.
+%	Res_instance_prunes=0. Para_instance_prunes=0. Basic_paramod_prunes=0.
+%	Nonunit_fsub_feature_tests=18371. Nonunit_bsub_feature_tests=6833.
+%	Megabytes=10.96.
+%	User_CPU=1.73, System_CPU=0.07, Wall_clock=2.
+%	
+%	============================== end of statistics =====================
+%	
+
+%assign(max_weight, 15).
+set(prolog_style_variables). 
+assign(max_given, 4000).
+set(raw).
+set(index_flat).
+%set(print_gen).
+set(superind).
+%set(cycle2).
+
+set(rank_given).
+set(random_loopdet).
+set(binary_resolution).
+set(ordered_res).
+set(back_subsume).
+assign(order, kbo).
+assign(literal_selection, none).
+clear(predicate_elim).
+%list(kbo_weights).
+%s = 3.
+%end_of_list.
+
+
+formulas(sos).
+( ( N(X) | S1(X) ) & -C1(s(0))  ) & ( ( N(X) | S2(X) ) & -C(s(0))  ) & ( ( N(X) | S3(X) ) & -C2P(s(0))  ) & ( ( N(X) | S4(X) ) & -C2(s(0))  ) & ( ( N(X) | S5(X) )  )  .  
+S1(0)  .
+S1(s(X)) <-> ( S1(X) & ( ( B1(s(X)) <-> -( - (A1(s(X)) <-> A2(s(X)) ) <-> C1(s(X)))  ) & ( $C1$(s(X)) <-> ((A1(s(X)) & A2(s(X))) | (C1(s(X)) & A1(s(X)) ) | (C1(s(X)) & A2(s(X))) ) ) ) )  .
+S2(0) .
+S2(s(X)) <-> ( S2(X) & ( ( S(s(X)) <-> -( - (B1(s(X)) <-> A3(s(X)) ) <-> C(s(X)))  ) & ( $C$(s(X)) <-> ((B1(s(X)) & A3(s(X))) | (C(s(X)) & B1(s(X))) | ( C(s(X)) & A3(s(X))) ) ) ) )  .
+S3(0)  .
+S3(s(X)) <-> ( S3(X) & ( ( SP(s(X)) <-> -( - (A1(s(X)) <-> B2(s(X)) ) <-> C2P(s(X)))  ) & ( $C2P$(s(X)) <-> (A1(s(X)) & B2(s(X)) | C2P(s(X)) & A1(s(X)) | C2P(s(X)) & B2(s(X)))  ) ) )  .
+S4(0) .
+S4(s(X)) <-> ( S4(X) & ( ( B2(s(X)) <-> -( - (A2(s(X)) <-> A3(s(X)) ) <-> C2(s(X)))  ) & ( $C2$(s(X)) <-> (A2(s(X)) & A3(s(X)) | C2(s(X)) & A2(s(X)) | C2(s(X)) & A3(s(X)))  ) ) )  .
+-S5(0) .
+S5(s(X)) <-> ( S5(X) | - (S(s(X)) <-> SP(s(X))) )  .
+C1(s(X))  <->  $C1$(X)  .
+C(s(X))  <->  $C$(X)  .
+C2P(s(X))  <->  $C2P$(X)  .
+C2(s(X))  <->  $C2$(X)  .
+
+end_of_list.

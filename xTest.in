@@ -1,0 +1,31 @@
+% Unsat OK
+assign(max_weight, 100).
+%assign(max_seconds, 1).
+%set(raw).
+%clear(auto_inference).
+set(prolog_style_variables).
+set(print_gen).
+set(binary_resolution).
+%clear(ordered_res).
+assign(max_given, 60).
+assign(literal_selection, none).
+%predicate_order([N,>]).
+clear(predicate_elim).
+list(kbo_weights).
+ s = 3.
+end_of_list.
+formulas(sos).
+N(Y) | -(p(Y) * p(Y) > q(Y)).
+
+p(s(Y)) = p(Y) + x(Y). 
+q(s(Y)) = q(Y) + (x(Y) * x(Y)).
+p(s(0)) = x(0).
+q(s(0)) = x(0) * x(0).
+V+Z > V.
+V*(Z1 + Z2) = (V*Z1) + (V*Z2).
+
+*(Y,1)=Y.
+*(1,Y)=Y.
+
+end_of_list.
+

@@ -1,0 +1,88 @@
+% n + p > n
+%	============================== PROOF =================================
+%	
+%	% Proof 1 at 0.43 (+ 0.02) seconds.
+%	% Given clauses 1207.
+%	
+%	% number of calls to fixpoint : 4 
+%	 S_init  : 
+%	 (976:  [ S1(v0) if  n = s(v0) ].
+%	984:  [ S2(v0) if  n = s(v0) ].
+%	1630:  [ -$T1$(v0) if  n = s(v0) ].
+%	1631:  [ S3(v0) if  n = s(v0) ].
+%	1632:  [ T2(v0) if  n = s(v0) ].
+%	) 
+%	 S_loop  : 
+%	 (2020:  [ T2(v0) if  n = s(s(v0)) ].
+%	2021:  [ S3(v0) if  n = s(s(v0)) ].
+%	2018:  [ -$T1$(v0) if  n = s(s(v0)) ].
+%	1725:  [ S2(v0) if  n = s(s(v0)) ].
+%	1717:  [ S1(v0) if  n = s(s(v0)) ].
+%	) 
+%	 The empty clauses  : 
+%	 (1461:  [  n = 0 ].
+%	1735:  [  n = s(0) ].
+%	2128:  [  n = s(s(0)) ].
+%	) max_rank 3 
+%	
+%	============================== end of proof ==========================
+%	
+%	============================== STATISTICS ============================
+
+%	Given=1207. Generated=31818. Kept=2491. proofs=1.
+%	Usable=670. Sos=55. Demods=0. Limbo=0, Disabled=1848. Hints=0.
+%	Kept_by_rule=0, Deleted_by_rule=0.
+%	Forward_subsumed=29084. Back_subsumed=1766.
+%	Sos_limit_deleted=0. Sos_displaced=0. Sos_removed=0.
+%	New_demodulators=0 (0 lex), Back_demodulated=0. Back_unit_deleted=0.
+%	Demod_attempts=0. Demod_rewrites=0.
+%	Res_instance_prunes=0. Para_instance_prunes=0. Basic_paramod_prunes=0.
+%	Nonunit_fsub_feature_tests=38395. Nonunit_bsub_feature_tests=4408.
+%	Megabytes=3.21.
+%	User_CPU=0.43, System_CPU=0.02, Wall_clock=1.
+%	
+%	============================== end of statistics =====================
+
+set(prolog_style_variables). 
+assign(max_given, 2300).
+set(raw).
+set(index_flat).
+%set(print_gen).
+set(superind).
+%set(cycle2).
+set(random_loopdet).
+set(rank_given).
+set(binary_resolution).
+set(ordered_res).
+clear(sat).
+set(random_loopdet).
+set(back_subsume).
+assign(order, kbo).
+%assign(literal_selection, all_negative).
+clear(predicate_elim).
+list(kbo_weights).
+s = 3.
+end_of_list.
+
+formulas(sos).
+( ( N(X) | -$M$$(X) ) & ( N(X) | -$P$$(X) )  ) & ( ( N(X) | -$M$(X) ) & ( N(X) | -$P$(X) ) & ( N(X) | ($MplusP$$(X)  <->  $T1$$(X) ) ) & ( N(X) | $S1$(X) ) & -T1(s(0))  ) & ( ( ( N(X) | $T2$(X) ) & T2(0) & ( N(X) | $S2$(X) )  ) & ( ( N(X) | $S3$(X) )  )  )  .  
+S1(0) <-> $T  .
+S1(s(X)) <-> ( S1(X) & ( ( MplusP(s(X)) <-> -( - (M(s(X)) <-> P(s(X)) ) <-> T1(s(X)))  ) & ( $T1$(s(X)) <-> (M(s(X)) & P(s(X)) | T1(s(X)) & M(s(X)) | T1(s(X)) & P(s(X)))  ) ) )  .
+S2(0) <-> $T  .
+S2(s(X)) <-> ( S2(X) & (T2(s(X)) <-> ((MplusP(s(X)) <-> M(s(X))) & T2(X) | -MplusP(s(X)) & M(s(X)))) )  .
+S3(0) <-> $F  .
+S3(s(X)) <-> ( S3(X) | - (MplusP(s(X)) <-> M(s(X))) )  .
+T1(s(X))  <->  $T1$(X)  .
+$M$(s(X))  <->  $M$$(X)  .
+M(s(X))  <->  $M$(X)  .
+P(s(X))  <->  $P$(X)  .
+$P$(s(X))  <->  $P$$(X)  .
+MplusP(s(X))  <->  $MplusP$(X)  .
+$MplusP$(s(X))  <->  $MplusP$$(X)  .
+T1(s(X))  <->  $T1$(X)  .
+$T1$(s(X))  <->  $T1$$(X)  .
+S1(s(X))  <->  $S1$(X).
+T2(s(X))  <->  $T2$(X).
+S2(s(X))  <->  $S2$(X).
+S3(s(X))  <->  $S3$(X).
+end_of_list.

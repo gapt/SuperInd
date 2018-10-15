@@ -1,4 +1,4 @@
-/*  Copyright (C) 2006, 2007 William McCune
+	/*  Copyright (C) 2006, 2007 William McCune
 
     This file is part of the LADR Deduction Library.
 
@@ -62,7 +62,21 @@ static struct {
   Clist limbo;
   Clist disabled;
   Plist empties;
-
+	/*******************MODIF*/
+  Plist rank_emptycl;
+	Topform loop_clause;// a clause of the for N^j(X)
+	BOOL loop;
+	int incr;
+	int max_rank;// the greatest rank of a generated clause
+	Plist SI;
+	Plist SIJ;
+	BOOL tab_rank [40]; 
+	Plist empty_clauses;
+	BOOL ind_empty_clause;
+	int current_rank;//the current rank
+	int number_of_calls;
+	BOOL admissible;// True if the class is admissible
+/*************************/
   // indexing
 
   Lindex clashable_idx;  // literal index for resolution rules
@@ -167,6 +181,9 @@ Prover_options init_prover_options(void)
   p->breadth_first          = init_flag("breadth_first",          FALSE);
   p->lightest_first         = init_flag("lightest_first",         FALSE);
   p->random_given           = init_flag("random_given",           FALSE);
+	/*************************************Modif*********/
+  p->rank_given             = init_flag("rank_given",             FALSE);
+	/*.........................................*/
   p->breadth_first_hints    = init_flag("breadth_first_hints",    FALSE);
   p->default_parts          = init_flag("default_parts",           TRUE);
 
@@ -181,7 +198,14 @@ Prover_options init_prover_options(void)
   p->production             = init_flag("production",             FALSE);
 
   p->lex_order_vars         = init_flag("lex_order_vars",         FALSE);
-
+	/**********************************Modif*****Add the loop detection flag**********/
+  p->superind			    = init_flag("superind",         TRUE); // launch the loop detection
+  p->sat			        = init_flag("sat",         TRUE); // launch the loop detection
+  p->cycle1				    = init_flag("cycle1",         TRUE); // loop detection algorithme based on the search of smallest fixed point
+  p->cycle2				    = init_flag("cycle2",         FALSE);// loop detection algorithme based on the search of largest fixed point
+  p->index_flat				= init_flag("index_flat",         FALSE);// apply the loop detection on sets of index_flat clauses
+  p->random_loopdet			= init_flag("random_loopdet",         FALSE); // launch the loop detection
+	/*.................................................*/
   // PARMS:
   //  internal name               external name      default    min      max
 
@@ -207,6 +231,10 @@ Prover_options init_prover_options(void)
   p->false_part        = init_parm("false_part",           4,      0,INT_MAX);
   p->true_part         = init_parm("true_part",            4,      0,INT_MAX);
   p->random_part       = init_parm("random_part",          0,      0,INT_MAX);
+	//Modif
+  p->rank_part         = init_parm("rank_part",            0,      0,INT_MAX);
+  p->start_rank          = init_parm("start_rank",             2,      0,INT_MAX);
+	//********* End Modif
   p->random_seed       = init_parm("random_seed",          0,     -1,INT_MAX);
   p->eval_limit        = init_parm("eval_limit",        1024,     -1,INT_MAX);
   p->eval_var_limit    = init_parm("eval_var_limit",      -1,     -1,INT_MAX);
@@ -286,6 +314,12 @@ Prover_options init_prover_options(void)
   flag_parm_dependency(p->para_units_only,    TRUE,  p->para_lit_limit,      1);
   flag_parm_dep_default(p->para_units_only,   FALSE, p->para_lit_limit);
 
+/********** Modif *********/
+  flag_flag_dependency(p->superind, FALSE,  p->cycle1, FALSE);
+  flag_flag_dependency(p->superind, FALSE,  p->cycle2, FALSE);
+  flag_flag_dependency(p->cycle1,   TRUE,   p->cycle2, FALSE);
+  flag_flag_dependency(p->cycle2,   TRUE,   p->cycle1, FALSE);
+/*************************/
   flag_flag_dependency(p->hyper_resolution, TRUE,  p->pos_hyper_resolution, TRUE);
   flag_flag_dependency(p->hyper_resolution, FALSE, p->pos_hyper_resolution, FALSE);
 
@@ -304,6 +338,9 @@ Prover_options init_prover_options(void)
   parm_parm_dependency(p->pick_given_ratio, p->false_part,        0, FALSE);
   parm_parm_dependency(p->pick_given_ratio, p->true_part,         0, FALSE);
   parm_parm_dependency(p->pick_given_ratio, p->random_part,       0, FALSE);
+	//************ Modif
+	parm_parm_dependency(p->pick_given_ratio, p->rank_part,     0, FALSE);
+	//********** End Modif
 
   flag_parm_dependency(p->lightest_first,    TRUE,  p->weight_part,     1);
   flag_parm_dependency(p->lightest_first,    TRUE,  p->age_part,        0);
@@ -311,6 +348,9 @@ Prover_options init_prover_options(void)
   flag_parm_dependency(p->lightest_first,    TRUE,  p->true_part,       0);
   flag_parm_dependency(p->lightest_first,    TRUE,  p->random_part,     0);
   flag_flag_dependency(p->lightest_first,   FALSE,  p->default_parts, TRUE);
+	//************ Modif
+	flag_parm_dependency(p->lightest_first,    TRUE,  p->rank_part,     0);
+	//********** End Modif
 
   flag_parm_dependency(p->random_given,    TRUE,  p->weight_part,     0);
   flag_parm_dependency(p->random_given,    TRUE,  p->age_part,        0);
@@ -318,13 +358,35 @@ Prover_options init_prover_options(void)
   flag_parm_dependency(p->random_given,    TRUE,  p->true_part,       0);
   flag_parm_dependency(p->random_given,    TRUE,  p->random_part,     1);
   flag_flag_dependency(p->random_given,   FALSE,  p->default_parts, TRUE);
+	
+	//************ Modif
+	flag_parm_dependency(p->random_given,    TRUE,  p->rank_part,     0);
+	//********** End Modif
 
+//********************************** Modif *******************************
+	
+	flag_parm_dependency(p->rank_given,    TRUE,  p->weight_part,     0);
+	flag_parm_dependency(p->rank_given,    TRUE,  p->age_part,        0);
+	flag_parm_dependency(p->rank_given,    TRUE,  p->false_part,      0);
+	flag_parm_dependency(p->rank_given,    TRUE,  p->true_part,       0);
+	flag_parm_dependency(p->rank_given,    TRUE,  p->random_part,     0);
+	flag_flag_dependency(p->rank_given,   FALSE,  p->default_parts, TRUE);
+	
+	//************ Modif
+	flag_parm_dependency(p->rank_given,    TRUE,  p->rank_part,     1);
+	//********** End Modif
+	
+//********************************** End Modif *****************************	
   flag_parm_dependency(p->breadth_first,    TRUE,  p->age_part,        1);
   flag_parm_dependency(p->breadth_first,    TRUE,  p->weight_part,     0);
   flag_parm_dependency(p->breadth_first,    TRUE,  p->false_part,      0);
   flag_parm_dependency(p->breadth_first,    TRUE,  p->true_part,       0);
   flag_parm_dependency(p->breadth_first,    TRUE,  p->random_part,     0);
   flag_flag_dependency(p->breadth_first,    FALSE, p->default_parts, TRUE);
+	
+	//************ Modif
+	flag_parm_dependency(p->breadth_first,    TRUE,  p->rank_part,     0);
+	//********** End Modif
 
   /* flag_parm_dependency(p->default_parts, TRUE,  p->hints_part, INT_MAX); */
   flag_parm_dependency(p->default_parts,    TRUE,  p->age_part,          1);
@@ -332,6 +394,10 @@ Prover_options init_prover_options(void)
   flag_parm_dependency(p->default_parts,    TRUE,  p->false_part,        4);
   flag_parm_dependency(p->default_parts,    TRUE,  p->true_part,         4);
   flag_parm_dependency(p->default_parts,    TRUE,  p->random_part,       0);
+	
+	//************ Modif
+	flag_parm_dependency(p->default_parts,    TRUE,  p->rank_part,     0);
+	//********** End Modif
 
   /* flag_parm_dependency(p->default_parts,    FALSE,  p->hints_part,  0); */
   flag_parm_dependency(p->default_parts,    FALSE,  p->age_part,         0);
@@ -339,7 +405,10 @@ Prover_options init_prover_options(void)
   flag_parm_dependency(p->default_parts,    FALSE,  p->false_part,       0);
   flag_parm_dependency(p->default_parts,    FALSE,  p->true_part,        0);
   flag_parm_dependency(p->default_parts,    FALSE,  p->random_part,      0);
-
+	
+	//************ Modif
+	flag_parm_dependency(p->default_parts,    FALSE,  p->rank_part,     0);
+	//********** End Modif
   /***********************/
 
   flag_flag_dependency(p->default_output, TRUE, p->quiet,               FALSE);
@@ -570,7 +639,7 @@ void fprint_prover_stats(FILE *fp, struct prover_stats s, char *stats_level)
   fprintf(fp,"Megabytes=%.2f.\n", s.kbyte_usage / 1000.0);
 
 #if 1
-  fprintf(fp,"User_CPU=%.2f, System_CPU=%.2f, Wall_clock=%u.\n",
+  fprintf(fp,"User_CPU=%.3f, System_CPU=%.2f, Wall_clock=%u.\n",
 	  user_seconds(), system_seconds(), wallclock());
 #else  /* some debugging junk */
   {
@@ -996,6 +1065,7 @@ void free_search_memory(void)
 static
 void handle_proof_and_maybe_exit(Topform empty_clause)
 {
+
   Term answers;
   Plist proof, p;
 
@@ -1074,6 +1144,159 @@ void handle_proof_and_maybe_exit(Topform empty_clause)
 
   zap_plist(proof);
 }  // handle_proof_and_maybe_exit
+/******************************************************Modif**************************/
+
+/*************
+ *
+ *   handle_proof()
+ *
+ *************/
+
+static
+void handle_proof(Topform empty_clause)
+{
+	
+	Term answers;
+	Plist proof, p;
+	
+	mark_parents_as_used(empty_clause);
+	//assign_clause_id(empty_clause);
+	proof = get_clause_ancestors(empty_clause);
+	uncompress_clauses(proof);
+	
+	if (!flag(Opt->reuse_denials) && Glob.horn) {
+		Topform c = first_negative_clause(proof);
+		if (clause_member_plist(Glob.desc_to_be_disabled, c)) {
+			printf("%% Redundant proof: ");
+			f_clause(empty_clause);
+			return;
+		}
+		else
+		/* Descendants of c will be disabled when it is safe to do so. */
+			Glob.desc_to_be_disabled = plist_prepend(Glob.desc_to_be_disabled, c);
+	}
+	
+	Glob.empties = plist_append(Glob.empties, empty_clause);
+	Stats.proofs++;
+	
+	answers = get_term_attributes(empty_clause->attributes, Att.answer);
+	
+	/* message to stderr */
+	
+	if (!flag(Opt->quiet)) {
+		fflush(stdout);
+		if (flag(Opt->bell))
+			bell(stderr);
+		//fprintf(stderr, "-------- Proof %d -------- ", Stats.proofs);
+		if (answers != NULL)
+			fwrite_term_nl(stderr, answers);
+		else
+			fprintf(stderr, "\n");
+	}
+	
+	/* print proof to stdout */
+	
+	fflush(stderr);
+	if (flag(Opt->print_proofs)) {
+		print_separator(stdout, "PROOF of level empty clauses", TRUE);
+		//printf("\n%% Proof %d at %.2f (+ %.2f) seconds",
+		//	   Stats.proofs, user_seconds(), system_seconds());
+		if (answers != NULL) {
+		//	printf(": ");
+			fwrite_term(stdout, answers);
+		}
+		printf(".\n");
+		
+		printf("%% Length of proof is %d.\n", proof_length(proof));
+		//printf("%% Level of proof is %d.\n", clause_level(empty_clause));
+		//printf("%% Maximum clause weight is %.3f.\n", max_clause_weight(proof));
+		//printf("%% Given clauses %d.\n\n", Stats.given);
+		for (p = proof; p; p = p->next)
+			fwrite_clause(stdout, p->v, CL_FORM_STD);
+		print_separator(stdout, "end of proof", TRUE);
+	}  /* print_proofs */
+	else {
+		//printf("\n-------- Proof %d at (%.2f + %.2f seconds) ",
+		//	   Stats.proofs, user_seconds(), system_seconds());
+		if (answers != NULL)
+			fwrite_term_nl(stdout, answers);
+		else
+			fprintf(stdout, "\n");
+	}
+	fflush(stdout);
+	if (answers)
+		zap_term(answers);
+	
+	//actions_in_proof(proof, &Att);  /* this can exit */
+	
+	//if (at_parm_limit(Stats.proofs, Opt->max_proofs))
+	//	done_with_search(MAX_PROOFS_EXIT);  /* does not return */
+	
+	zap_plist(proof);
+}  // handle_proof_and_maybe_exit
+/*************
+ *
+ *   handle_proof_and_maybe_exit2()
+ *
+ *************/
+
+static
+void handle_proof_and_maybe_exit2()
+{
+	Plist proof, p;
+	
+	
+	proof = NULL;
+	Stats.proofs=1;
+
+	
+	/* print proof to stdout */
+	
+	fflush(stderr);
+	if (isEmpty(Glob.SI)) {
+		print_separator(stdout, "PROOF", TRUE);
+		printf("\n%% Proof %d at %.3f (+ %.3f) seconds",
+			   Stats.proofs, user_seconds(), system_seconds());
+		printf(".\n");
+		
+		//printf("%% Length of proof is %d.\n", proof_length(proof));
+		printf("%% Given clauses %d.\n\n", Stats.given);
+		printf("%% Cet ensemble est satisfaisable \n");
+		printf("%% un modèle possible : n = %d", Glob.max_rank + 1);
+	} else{
+	if (flag(Opt->print_proofs)) {
+		print_separator(stdout, "PROOF", TRUE);
+		printf("\n%% Proof %d at %.3f (+ %.3f) seconds",
+			   Stats.proofs, user_seconds(), system_seconds());
+		printf(".\n");
+		
+		//printf("%% Length of proof is %d.\n", proof_length(proof));
+		printf("%% Given clauses %d.\n\n", Stats.given);
+		printf("%% number of calls to fixpoint : %d \n", Glob.number_of_calls);
+
+		for (p = proof; p; p = p->next)
+			fwrite_clause(stdout, p->v, CL_FORM_STD);
+		printf(" S_init  : \n ");
+		p_plist_param(Glob.SI);
+		printf("\n");
+		printf(" S_loop  : \n ");
+		p_plist_param(Glob.SIJ);
+		printf("\n");
+		printf(" The empty clauses  : \n ");
+		//p_plist_param(get_empty_clauses(Glob.rank_emptycl, 0,get_rank(Glob.SIJ->v) ));
+		p_plist_param(level_empty_clause2(Glob.rank_emptycl, -1, get_rank(Glob.SIJ->v)));
+		printf("max_rank %d \n",Glob.max_rank); 
+		print_separator(stdout, "end of proof", TRUE);
+		//handle_proof(Glob.rank_emptycl->v);
+	}  /* print_proofs */
+	}
+	fflush(stdout);
+
+	done_with_search(MAX_PROOFS_EXIT);  /* does not return */
+	
+	zap_plist(proof);
+}  // handle_proof_and_maybe_exit2
+
 
 /*************
  *
@@ -1187,14 +1410,18 @@ void cl_process_simplify(Topform c)
 static
 void cl_process_keep(Topform c)
 {
-  Stats.kept++;
+	Stats.kept++;
   if (!c->normal_vars)
     renumber_variables(c, MAX_VARS);
+	
+
   if (c->id == 0)
     assign_clause_id(c);  // unit conflict or input: already has ID
   mark_parents_as_used(c);
+ //printf("c = ");	p_clause(c);
   mark_maximal_literals(c->literals);
   mark_selected_literals(c->literals, stringparm1(Opt->literal_selection));
+	
   if (c->matching_hint != NULL)
     keep_hint_matcher(c);
 
@@ -1260,6 +1487,7 @@ void cl_process_new_demod(Topform c)
 static
 BOOL skip_black_white_tests(Topform c)
 {
+	//return TRUE;
   return (!Glob.searching ||
 	  c->used ||
 	  restricted_denial(c) ||
@@ -1269,64 +1497,110 @@ BOOL skip_black_white_tests(Topform c)
 static
 BOOL cl_process_delete(Topform c)
 {
-  // Should the clause be deleted (tautology, limits, subsumption)?
-
-  if (true_clause(c->literals)) {  // tautology
-    if (flag(Opt->print_gen))
-      printf("tautology\n");
-    Stats.subsumed++;
-    return TRUE;  // delete
-  }
-
-  clause_wt_with_adjustments(c);  // possibly sets c->matching_hint
-
-  // White-black tests
-
-  if (!skip_black_white_tests(c)) {
-    if (white_tests(c)) {
-      if (flag(Opt->print_gen))
-	printf("keep_rule applied.\n");
-      Stats.kept_by_rule++;
-    }
-    else {
-      if (black_tests(c)) {
-	if (flag(Opt->print_gen))
-	  printf("delete_rule applied.\n");
-	Stats.deleted_by_rule++;
-	return TRUE;  //delete
-      }
-      else if (!sos_keep2(c, Glob.sos, Opt)) {
-	if (flag(Opt->print_gen))
-	  printf("sos_limit applied.\n");
-	Stats.sos_limit_deleted++;
-	return TRUE;  // delete
-      }
-    }
-  }
-      
-  // Forward subsumption
-
-  {
-    Topform subsumer;
-    clock_start(Clocks.subsume);
-    subsumer = forward_subsumption(c);
-    clock_stop(Clocks.subsume);
-    if (subsumer != NULL && !c->used) {
-      if (flag(Opt->print_gen))
-	printf("subsumed by %d.\n", subsumer->id);
-      Stats.subsumed++;
-      return TRUE;  // delete
-    }
-    else
-      return FALSE;  // keep the clause
-  }
+	// Should the clause be deleted (tautology, limits, subsumption, normalized)?
+	
+	if (true_clause(c->literals)) {  // tautology
+		if (flag(Opt->print_gen))
+			printf("tautology\n");
+		Stats.subsumed++;
+		return TRUE;  // delete
+	}
+	
+	/**********MIDIF**********/
+	if (flag(Opt->superind)) {
+		
+		if(!(is_normalized(c)) || !alpha_C_clause(c)){
+			if(flag(Opt->print_gen)){
+				printf("not normalized \n");
+				
+			}
+			return TRUE;
+		}
+		if(get_rank(c)== -2){
+			if(flag(Opt->print_gen)){
+				printf("the m.g.u is at least of the form s(s(x)) \n");
+				Glob.admissible = FALSE;
+				p_clause(c);
+				printf("");
+			}
+			return TRUE;
+		}
+		if(get_rank(c)== -3){
+			if(flag(Opt->print_gen)){
+				printf("it's not an (alpha-C)- clause \n");
+				Glob.admissible = FALSE;
+				//printf("alpha C %d \n",alpha_C_clause(c));
+				printf("");
+				//p_clause(c);
+			}
+			
+			return TRUE;
+		}
+	}
+	/**********************/
+	clause_wt_with_adjustments(c);  // possibly sets c->matching_hint
+	
+	// White-black tests
+	
+	if (!skip_black_white_tests(c)) { //Modif temporaire black and white test ??
+		if (white_tests(c)) {
+			if (flag(Opt->print_gen))
+				printf("keep_rule applied.\n");
+			Stats.kept_by_rule++;
+		}
+		else {
+			if (black_tests(c)) {
+				if (flag(Opt->print_gen))
+					printf("delete_rule applied.\n");
+				Stats.deleted_by_rule++;
+				return TRUE;  //delete
+			}
+			else if (!sos_keep2(c, Glob.sos, Opt)) {
+				if (flag(Opt->print_gen))
+					printf("sos_limit applied.\n");
+				Stats.sos_limit_deleted++;
+				return TRUE;  // delete
+			}
+		}
+	}
+	
+	// Forward subsumption
+	
+	{
+		Topform subsumer ;
+		clock_start(Clocks.subsume);
+		subsumer = forward_subsumption(c);
+		clock_stop(Clocks.subsume);
+		if (subsumer != NULL && !c->used) {
+			//printf("I I ");
+			//p_clause(c);
+			//p_clause(subsumer);
+			//printf("J J\n");
+			if((param_free(c) && !param_free(subsumer)) || (!param_free(c) && param_free(subsumer)) ){
+				printf("La clause ");
+				p_clause(c);
+			     printf(" est subsumée par  ");
+				p_clause(subsumer);
+					printf(" Fin \n");
+			}
+				if (flag(Opt->print_gen))
+					printf("subsumed by %d.\n", subsumer->id);
+				Stats.subsumed++;
+				return TRUE;  // delete
+			//}
+			//else
+				//return FALSE;
+		}
+		else
+			return FALSE;  // keep the clause
+	}
 }  // cl_process_delete
 
 static
 void cl_process(Topform c)
 {
   // If the infer_clock is running, stop it and restart it when done.
-
+  
   BOOL infer_clock_stopped = FALSE;
   if (clock_running(Clocks.infer)) {
     clock_stop(Clocks.infer);
@@ -1344,33 +1618,45 @@ void cl_process(Topform c)
     printf("\ngenerated: ");
     fwrite_clause(stdout, c, CL_FORM_STD);
   }
-
+   
   cl_process_simplify(c);            // all simplification
-
-  if (number_of_literals(c->literals) == 0)    // empty clause
+	
+/*************************MODIF*****************************/
+	
+	/*********************************************************/
+  if (number_of_literals(c->literals) == 0 || loop_clause(c) )    // empty clause
     handle_proof_and_maybe_exit(c);
-  else {
-    // Do safe unit conflict before any deletion checks.
-    if (flag(Opt->safe_unit_conflict))
-      cl_process_conflict(c, FALSE);  // marked as used if conflict
+  else {//*********************Modif *************
+	  if(loop_clause(c)){
+		  Glob.loop_clause = c;
+		  Glob.loop =TRUE;	
+	  }else{//***********************************
+		  // Do safe unit conflict before any deletion checks.
+		  if (flag(Opt->safe_unit_conflict))
+			  cl_process_conflict(c, FALSE);  // marked as used if conflict
+		  
+		  if (cl_process_delete(c))
+			  delete_clause(c);
+		  else {
+			  cl_process_keep(c);
+			  // Ordinary unit conflict.
+			  if (!flag(Opt->safe_unit_conflict))
+				  cl_process_conflict(c, FALSE);
+			  cl_process_new_demod(c);
+			  // We insert c into the literal index now so that it will be
+			  // available for unit conflict and forward subsumption while
+			  // it's in limbo.  (It should not be back subsumed while in limbo.
+			  // See fatal error in limbo_process).
+			  index_literals(c, INSERT, Clocks.index, FALSE);
+			  init_rank(c);
+			  clist_append(c, Glob.limbo);
+		  }  // not deleted
+	  }// not a loop_clause  
+  }// not empty clause
+	// Modif
+	
 
-    if (cl_process_delete(c))
-      delete_clause(c);
-    else {
-      cl_process_keep(c);
-      // Ordinary unit conflict.
-      if (!flag(Opt->safe_unit_conflict))
-	cl_process_conflict(c, FALSE);
-      cl_process_new_demod(c);
-      // We insert c into the literal index now so that it will be
-      // available for unit conflict and forward subsumption while
-      // it's in limbo.  (It should not be back subsumed while in limbo.
-      // See fatal error in limbo_process).
-      index_literals(c, INSERT, Clocks.index, FALSE);
-      clist_append(c, Glob.limbo);
-    }  // not deleted
-  }  // not empty clause
-  
+	/*.............................................*/
   clock_stop(Clocks.preprocess);
   if (infer_clock_stopped)
     clock_start(Clocks.infer);
@@ -1434,32 +1720,32 @@ void back_demod(Topform demod)
 static
 void back_unit_deletion(Topform unit)
 {
-  Plist results, p, prev;
-
-  clock_start(Clocks.back_unit_del);
-  results = back_unit_deletable(unit);
-  clock_stop(Clocks.back_unit_del);
-  p = results;
-  while(p != NULL) {
-    Topform old = p->v;
-    if (!clist_member(old, Glob.disabled)) {
-      Topform new;
-      if (flag(Opt->basic_paramodulation))
-	new = copy_clause_with_flag(old, nonbasic_flag());
-      else
-	new = copy_clause(old);
-      Stats.back_unit_deleted++;
-      if (flag(Opt->print_kept))
-	printf("        %d back unit deleting %d.\n", unit->id, old->id);
-      new->justification = back_unit_deletion_just(old);
-      new->attributes = inheritable_att_instances(old->attributes, NULL);
-      disable_clause(old);
-      cl_process(new);
-    }
-    prev = p;
-    p = p->next;
-    free_plist(prev);
-  }
+	Plist results, p, prev;
+	
+	clock_start(Clocks.back_unit_del);
+	results = back_unit_deletable(unit);
+	clock_stop(Clocks.back_unit_del);
+	p = results;
+	while(p != NULL) {
+		Topform old = p->v;
+		if (!clist_member(old, Glob.disabled)) {
+			Topform new;
+			if (flag(Opt->basic_paramodulation))
+				new = copy_clause_with_flag(old, nonbasic_flag());
+			else
+				new = copy_clause(old);
+			Stats.back_unit_deleted++;
+			if (flag(Opt->print_kept))
+				printf("        %d back unit deleting %d.\n", unit->id, old->id);
+			new->justification = back_unit_deletion_just(old);
+			new->attributes = inheritable_att_instances(old->attributes, NULL);
+			disable_clause(old);
+			cl_process(new);
+		}
+		prev = p;
+		p = p->next;
+		free_plist(prev);
+	}
 }  // back_unit_deletion
 
 /*************
@@ -1475,26 +1761,26 @@ void back_unit_deletion(Topform unit)
 static
 void back_cac_simplify(void)
 {
-  Plist to_delete = NULL;
-  Plist a;
-  Clist_pos p;
-  for (p = Glob.sos->first; p; p = p->next) {
-    if (cac_tautology(p->c->literals))
-      to_delete = plist_prepend(to_delete, p->c);
-  }
-  for (p = Glob.usable->first; p; p = p->next) {
-    if (cac_tautology(p->c->literals))
-      to_delete = plist_prepend(to_delete, p->c);
-  }
-  for (p = Glob.limbo->first; p; p = p->next) {
-    if (cac_tautology(p->c->literals))
-      to_delete = plist_prepend(to_delete, p->c);
-  }
-  for (a = to_delete; a; a = a->next) {
-    printf("%% back CAC tautology: "); f_clause(a->v);
-    disable_clause(a->v);
-  }
-  zap_plist(to_delete);  /* shallow */
+	Plist to_delete = NULL;
+	Plist a;
+	Clist_pos p;
+	for (p = Glob.sos->first; p; p = p->next) {
+		if (cac_tautology(p->c->literals))
+			to_delete = plist_prepend(to_delete, p->c);
+	}
+	for (p = Glob.usable->first; p; p = p->next) {
+		if (cac_tautology(p->c->literals))
+			to_delete = plist_prepend(to_delete, p->c);
+	}
+	for (p = Glob.limbo->first; p; p = p->next) {
+		if (cac_tautology(p->c->literals))
+			to_delete = plist_prepend(to_delete, p->c);
+	}
+	for (a = to_delete; a; a = a->next) {
+		printf("%% back CAC tautology: "); f_clause(a->v);
+		disable_clause(a->v);
+	}
+	zap_plist(to_delete);  /* shallow */
 }  // back_cac_simplify
 
 /*************
@@ -1506,43 +1792,43 @@ void back_cac_simplify(void)
 static
 void disable_to_be_disabled(void)
 {
-  if (Glob.desc_to_be_disabled) {
-
-    Plist descendants = NULL;
-    Plist p;
-
-    sort_clist_by_id(Glob.disabled);
-
-    for (p = Glob.desc_to_be_disabled; p; p = p->next) {
-      Topform c = p->v;
-      Plist x = neg_descendants(c,Glob.usable,Glob.sos,Glob.disabled);
-      descendants = plist_cat(descendants, x);
-    }
-    
+	if (Glob.desc_to_be_disabled) {
+		
+		Plist descendants = NULL;
+		Plist p;
+		
+		sort_clist_by_id(Glob.disabled);
+		
+		for (p = Glob.desc_to_be_disabled; p; p = p->next) {
+			Topform c = p->v;
+			Plist x = neg_descendants(c,Glob.usable,Glob.sos,Glob.disabled);
+			descendants = plist_cat(descendants, x);
+		}
+		
 #if 1
-    {
-      int n = 0;
-      printf("\n%% Disable descendants (x means already disabled):\n");
-      for (p = descendants; p; p = p->next) {
-	Topform d = p->v;
-	printf(" %d%s", d->id, clist_member(d, Glob.disabled) ? "x" : "");
-	if (++n % 10 == 0)
-	  printf("\n");
-      }
-      printf("\n");
-    }
+		{
+			int n = 0;
+			printf("\n%% Disable descendants (x means already disabled):\n");
+			for (p = descendants; p; p = p->next) {
+				Topform d = p->v;
+				printf(" %d%s", d->id, clist_member(d, Glob.disabled) ? "x" : "");
+				if (++n % 10 == 0)
+					printf("\n");
+			}
+			printf("\n");
+		}
 #endif
-
-    for (p = descendants; p; p = p->next) {
-      Topform d = p->v;
-      if (!clist_member(d, Glob.disabled))
-	disable_clause(d);
-    }
-
-    zap_plist(descendants);
-    zap_plist(Glob.desc_to_be_disabled);
-    Glob.desc_to_be_disabled = NULL;
-  }
+		
+		for (p = descendants; p; p = p->next) {
+			Topform d = p->v;
+			if (!clist_member(d, Glob.disabled))
+				disable_clause(d);
+		}
+		
+		zap_plist(descendants);
+		zap_plist(Glob.desc_to_be_disabled);
+		Glob.desc_to_be_disabled = NULL;
+	}
 }  /* disable_to_be_disabled */
 
 /*************
@@ -1566,115 +1852,149 @@ void disable_to_be_disabled(void)
 static
 void limbo_process(BOOL pre_search)
 {
-  while (Glob.limbo->first) {
-    Topform c = Glob.limbo->first->c;
-
-    // factoring
-
-    if (flag(Opt->factor))
-      binary_factors(c, cl_process);
-
-    // Try to apply new_constant rule.
-
-    if (!at_parm_limit(Stats.new_constants, Opt->new_constants)) {
-      Topform new = new_constant(c, INT_MAX);
-      if (new) {
-	Stats.new_constants++;
-	if (!flag(Opt->quiet)) {
-	  printf("\nNOTE: New constant: ");
-	  f_clause(new);
-	  printf("NOTE: New ");
-	  print_fsym_precedence(stdout);
-	}
-	if (Glob.interps)
-	  update_semantics_new_constant(new);
-	cl_process(new);
-      }
+	while (Glob.limbo->first) {
+		Topform c = Glob.limbo->first->c;
+		
+		//if (flag(Opt->loopdet)) {
+			//binary_factors(c, cl_process);
+		//}
+		
+		// factoring
+		
+		if (flag(Opt->factor)|| (flag(Opt->superind) && !param_free(c)) ){
+			binary_factors(c, cl_process);
+			//printf("W W ");
+			//p_clause(c);
+			
+		}
+		
+		// Try to apply new_constant rule.
+		
+		if (!at_parm_limit(Stats.new_constants, Opt->new_constants)) {
+			Topform new = new_constant(c, INT_MAX);
+			if (new) {
+				Stats.new_constants++;
+				if (!flag(Opt->quiet)) {
+					printf("\nNOTE: New constant: ");
+					f_clause(new);
+					printf("NOTE: New ");
+					print_fsym_precedence(stdout);
+				}
+				if (Glob.interps)
+					update_semantics_new_constant(new);
+				cl_process(new);
+			}
+		}
+		
+		// fold denial (for input clauses only)
+		
+		if (parm(Opt->fold_denial_max) > 1 &&
+			(has_input_just(c) || has_copy_just(c))) {
+			Topform new = fold_denial(c, parm(Opt->fold_denial_max));
+			if (new) {
+				if (!flag(Opt->quiet)) {
+					printf("\nNOTE: Fold denial: ");
+					f_clause(new);
+				}
+				cl_process(new);
+			}
+		}
+		
+		// Disable clauses subsumed by c (back subsumption).
+		
+		if (flag(Opt->back_subsume)) {
+			Plist subsumees;
+			clock_start(Clocks.back_subsume);
+			subsumees = back_subsumption(c);
+			if (subsumees != NULL)
+				c->subsumer = TRUE;
+			while (subsumees != NULL) {
+				Topform d = subsumees->v;
+				if (clist_member(d, Glob.limbo) && !pureparam_cst_topform(c)){  // See comment in cl_process.Modif
+					p_clause(d);
+					p_clause(c);
+					fatal_error("back subsume limbo clause");
+				}
+				Stats.back_subsumed++;
+				if (flag(Opt->print_kept))
+					printf("    %d back subsumes %d.\n", c->id, d->id);
+				disable_clause(d);
+				subsumees = plist_pop(subsumees);
+			}
+			clock_stop(Clocks.back_subsume);
+		}
+		
+		// If demodulator, rewrite other clauses (back demodulation).
+		
+		if (clist_member(c, Glob.demods)) {
+			if (flag(Opt->print_kept))
+				printf("    starting back demodulation with %d.\n", c->id);
+			back_demod(c);  // This calls cl_process on rewritable clauses.
+		}
+		
+		// If unit, use it to simplify other clauses (back unit_deletion)
+		
+		if (flag(Opt->unit_deletion) && unit_clause(c->literals)) {
+			back_unit_deletion(c);  // This calls cl_process on rewritable clauses.
+		}
+		
+		// Check if we should do back CAC simplification.
+		
+		if (plist_member(Glob.cac_clauses, c)) {
+			back_cac_simplify();
+		}
+		
+		// Remove from limbo
+		
+		clist_remove(c, Glob.limbo);
+		/**************************************Modif *****************************/
+		if(pureparam_cst_topform(c)){
+			//printf("th");
+			//p_clause(c);
+			Glob.tab_rank[get_rank(c)]= TRUE;
+			/*if(Glob.max_rank < get_rank(c)){
+				Glob.max_rank = get_rank(c);
+				
+			}*/
+			//printf("E : ");p_clause(c);printf(" E\n ");
+			//p_plist(Glob.rank_emptycl);
+			Glob.rank_emptycl = plist_append(Glob.rank_emptycl, c);
+			//p_plist(Glob.rank_emptycl);
+			
+		}
+		
+		/*.....................................................*/
+		
+		// If restricted_denial, appdend to usable, else append to sos.
+		
+		if (restricted_denial(c)) {
+			// do not index_clashable!  disable_clause should not unindex_clashable!
+			clist_append(c, Glob.usable);
+			index_back_demod(c, INSERT, Clocks.index, flag(Opt->back_demod));
+		}
+		else {
+			// Move to Sos and index to be found for back demodulation.
+			if (parm(Opt->sos_limit) != -1 &&
+				clist_length(Glob.sos) >= parm(Opt->sos_limit)) {
+				sos_displace2(disable_clause);
+				Stats.sos_displaced++;
+			}
+			if (pre_search)
+				c->initial = TRUE;
+			else
+				c->initial = FALSE;
+			insert_into_sos2(c, Glob.sos);
+			
+		}
+		
+		index_back_demod(c, INSERT, Clocks.index, flag(Opt->back_demod));
+		
+		
     }
-
-    // fold denial (for input clauses only)
-
-    if (parm(Opt->fold_denial_max) > 1 &&
-	(has_input_just(c) || has_copy_just(c))) {
-      Topform new = fold_denial(c, parm(Opt->fold_denial_max));
-      if (new) {
-	if (!flag(Opt->quiet)) {
-	  printf("\nNOTE: Fold denial: ");
-	  f_clause(new);
-	}
-	cl_process(new);
-      }
-    }
-
-    // Disable clauses subsumed by c (back subsumption).
-
-    if (flag(Opt->back_subsume)) {
-      Plist subsumees;
-      clock_start(Clocks.back_subsume);
-      subsumees = back_subsumption(c);
-      if (subsumees != NULL)
-	c->subsumer = TRUE;
-      while (subsumees != NULL) {
-	Topform d = subsumees->v;
-	if (clist_member(d, Glob.limbo))  // See comment in cl_process.
-	  fatal_error("back subsume limbo clause");
-	Stats.back_subsumed++;
-	if (flag(Opt->print_kept))
-	  printf("    %d back subsumes %d.\n", c->id, d->id);
-	disable_clause(d);
-	subsumees = plist_pop(subsumees);
-      }
-      clock_stop(Clocks.back_subsume);
-    }
-
-    // If demodulator, rewrite other clauses (back demodulation).
-
-    if (clist_member(c, Glob.demods)) {
-      if (flag(Opt->print_kept))
-	printf("    starting back demodulation with %d.\n", c->id);
-      back_demod(c);  // This calls cl_process on rewritable clauses.
-    }
-
-    // If unit, use it to simplify other clauses (back unit_deletion)
-
-    if (flag(Opt->unit_deletion) && unit_clause(c->literals)) {
-      back_unit_deletion(c);  // This calls cl_process on rewritable clauses.
-    }
-
-    // Check if we should do back CAC simplification.
-
-    if (plist_member(Glob.cac_clauses, c)) {
-      back_cac_simplify();
-    }
-
-    // Remove from limbo
-
-    clist_remove(c, Glob.limbo);
-
-    // If restricted_denial, appdend to usable, else append to sos.
-
-    if (restricted_denial(c)) {
-      // do not index_clashable!  disable_clause should not unindex_clashable!
-      clist_append(c, Glob.usable);
-      index_back_demod(c, INSERT, Clocks.index, flag(Opt->back_demod));
-    }
-    else {
-      // Move to Sos and index to be found for back demodulation.
-      if (parm(Opt->sos_limit) != -1 &&
-	  clist_length(Glob.sos) >= parm(Opt->sos_limit)) {
-	sos_displace2(disable_clause);
-	Stats.sos_displaced++;
-      }
-      if (pre_search)
-	c->initial = TRUE;
-      else
-	c->initial = FALSE;
-      insert_into_sos2(c, Glob.sos);
-      index_back_demod(c, INSERT, Clocks.index, flag(Opt->back_demod));
-    }
-  }
-  // Now it is safe to disable descendants of desc_to_be_disabled clauses.
-  disable_to_be_disabled();
+	
+	
+	// Now it is safe to disable descendants of desc_to_be_disabled clauses.
+	disable_to_be_disabled();
 }  // limbo_process
 
 /*************
@@ -1723,51 +2043,51 @@ void infer_outside_loop(Topform c)
 static
 void given_infer(Topform given)
 {
-  clock_start(Clocks.infer);
-
-  if (flag(Opt->binary_resolution))
-    binary_resolution(given,
-		      ANY_RES,
-		      Glob.clashable_idx,
-		      cl_process);
-
-  if (flag(Opt->neg_binary_resolution))
-    binary_resolution(given,
-		      NEG_RES,
-		      Glob.clashable_idx,
-		      cl_process);
-
-  if (flag(Opt->pos_hyper_resolution))
-    hyper_resolution(given, POS_RES, Glob.clashable_idx, cl_process);
-
-  if (flag(Opt->neg_hyper_resolution))
-    hyper_resolution(given, NEG_RES, Glob.clashable_idx, cl_process);
-
-  if (flag(Opt->pos_ur_resolution))
-    ur_resolution(given, POS_RES, Glob.clashable_idx, cl_process);
-
-  if (flag(Opt->neg_ur_resolution))
-    ur_resolution(given, NEG_RES, Glob.clashable_idx, cl_process);
-
-  if (flag(Opt->paramodulation) &&
-      !over_parm_limit(number_of_literals(given->literals),
-		       Opt->para_lit_limit)) {
-    // This paramodulation does not use indexing.
-    Context cf = get_context();
-    Context ci = get_context();
-    Clist_pos p;
-    for (p = Glob.usable->first; p; p = p->next) {
-      if (!restricted_denial(p->c) &&
-	  !over_parm_limit(number_of_literals(p->c->literals),
-			   Opt->para_lit_limit)) {
-	para_from_into(given, cf, p->c, ci, FALSE, cl_process);
-	para_from_into(p->c, cf, given, ci, TRUE, cl_process);
-      }
-    }
-    free_context(cf);
-    free_context(ci);
-  }
-  clock_stop(Clocks.infer);
+	clock_start(Clocks.infer);
+	
+	if (flag(Opt->binary_resolution))
+		binary_resolution(given,
+						  ANY_RES,
+						  Glob.clashable_idx,
+						  cl_process);
+	
+	if (flag(Opt->neg_binary_resolution))
+		binary_resolution(given,
+						  NEG_RES,
+						  Glob.clashable_idx,
+						  cl_process);
+	
+	if (flag(Opt->pos_hyper_resolution))
+		hyper_resolution(given, POS_RES, Glob.clashable_idx, cl_process);
+	
+	if (flag(Opt->neg_hyper_resolution))
+		hyper_resolution(given, NEG_RES, Glob.clashable_idx, cl_process);
+	
+	if (flag(Opt->pos_ur_resolution))
+		ur_resolution(given, POS_RES, Glob.clashable_idx, cl_process);
+	
+	if (flag(Opt->neg_ur_resolution))
+		ur_resolution(given, NEG_RES, Glob.clashable_idx, cl_process);
+	
+	if (flag(Opt->paramodulation) &&
+		!over_parm_limit(number_of_literals(given->literals),
+						 Opt->para_lit_limit)) {
+			// This paramodulation does not use indexing.
+			Context cf = get_context();
+			Context ci = get_context();
+			Clist_pos p;
+			for (p = Glob.usable->first; p; p = p->next) {
+				if (!restricted_denial(p->c) &&
+					!over_parm_limit(number_of_literals(p->c->literals),
+									 Opt->para_lit_limit)) {
+						para_from_into(given, cf, p->c, ci, FALSE, cl_process);
+						para_from_into(p->c, cf, given, ci, TRUE, cl_process);
+					}
+			}
+			free_context(cf);
+			free_context(ci);
+		}
+	clock_stop(Clocks.infer);
 }  // given_infer
 
 /*************
@@ -1805,79 +2125,87 @@ void rebuild_sos_index(void)
 
 static
 void make_inferences(void)
-{
-  Topform given_clause;
-  char *selection_type;
-
-  clock_start(Clocks.pick_given);
-  given_clause = get_given_clause2(Glob.sos,Stats.given, Opt, &selection_type);
-  clock_stop(Clocks.pick_given);
-
-  if (given_clause != NULL) {
-    static int level = 0;             // NOTE: STATIC VARIABLE
-    static int last_of_level = 0;     // NOTE: STATIC VARIABLE
-
-    // Print "level" message for breadth-first; also "level" actions.
-
-    if (flag(Opt->breadth_first) &&
-	parm(Opt->true_part) == 0 &&
-	parm(Opt->false_part) == 0 &&
-	parm(Opt->weight_part) == 0 &&
-	parm(Opt->random_part) == 0 &&
-	str_ident(selection_type, "A") &&
-	given_clause->id > last_of_level) {
-      level++;
-      last_of_level = clause_ids_assigned();
-      if (!flag(Opt->quiet)) {
-	printf("\nNOTE: Starting on level %d, last clause "
-	       "of level %d is %d.\n",
-	       level, level-1, last_of_level);
-	fflush(stdout);
-	fprintf(stderr, "\nStarting on level %d, last clause "
-		"of level %d is %d.\n",
-		level, level-1, last_of_level);
-	fflush(stderr);
-      }
-      statistic_actions("level", level);
-    }
-
-    Stats.given++;
-
-    // Maybe disable back subsumption.
-
-    if (over_parm_limit(Stats.given, Opt->max_given))
-      done_with_search(MAX_GIVEN_EXIT);
-
-    if (Stats.given == parm(Opt->backsub_check)) {
-      int ratio = (Stats.back_subsumed == 0 ?
-		   INT_MAX :
-		   Stats.kept / Stats.back_subsumed);
-      if (ratio > 20) {
-	clear_flag(Opt->back_subsume, TRUE);
-	printf("\nNOTE: Back_subsumption disabled, ratio of kept"
-	       " to back_subsumed is %d (%.2f of %.2f sec).\n",
-	       ratio, clock_seconds(Clocks.back_subsume), user_seconds());
-	fflush(stdout);
-      }
-    }
-    
-    if (flag(Opt->print_given)) {
-      if (given_clause->weight == round(given_clause->weight))
-	printf("\ngiven #%d (%s,wt=%d): ",
-	       Stats.given, selection_type, (int) given_clause->weight);
-      else
-	printf("\ngiven #%d (%s,wt=%.3f): ",
-	       Stats.given, selection_type, given_clause->weight);
-      fwrite_clause(stdout, given_clause, CL_FORM_STD);
-    }
-
-    statistic_actions("given", Stats.given);
-
-    clist_append(given_clause, Glob.usable);
-    index_clashable(given_clause, INSERT);
-    given_infer(given_clause);
-  }
-}  // make_inferences
+	{
+		Topform given_clause;
+		char *selection_type;
+		/************************** Modif ************************/
+		clock_start(Clocks.pick_given);
+		given_clause = get_given_clause2(Glob.sos,Stats.given, Opt, &selection_type);
+		clock_stop(Clocks.pick_given);
+		
+		if (given_clause != NULL) {
+			if(flag(Opt->sat)){
+				if (flag(Opt->rank_given) & Glob.admissible) {
+					if (get_rank(given_clause) > Glob.max_rank + 1) {
+						handle_proof_and_maybe_exit2();
+					}
+				}
+			}
+			static int level = 0;             // NOTE: STATIC VARIABLE
+			static int last_of_level = 0;     // NOTE: STATIC VARIABLE
+			
+			// Print "level" message for breadth-first; also "level" actions.
+			
+			if (flag(Opt->breadth_first) &&
+				parm(Opt->true_part) == 0 &&
+				parm(Opt->false_part) == 0 &&
+				parm(Opt->weight_part) == 0 &&
+				parm(Opt->random_part) == 0 &&
+				parm(Opt->rank_part) == 0 && // Modif
+				str_ident(selection_type, "A") &&
+				given_clause->id > last_of_level) {
+				level++;
+				last_of_level = clause_ids_assigned();
+				if (!flag(Opt->quiet)) {
+					printf("\nNOTE: Starting on level %d, last clause "
+						   "of level %d is %d.\n",
+						   level, level-1, last_of_level);
+					fflush(stdout);
+					fprintf(stderr, "\nStarting on level %d, last clause "
+							"of level %d is %d.\n",
+							level, level-1, last_of_level);
+					fflush(stderr);
+				}
+				statistic_actions("level", level);
+			}
+			
+			Stats.given++;
+			
+			// Maybe disable back subsumption.
+			
+			if (over_parm_limit(Stats.given, Opt->max_given))
+				done_with_search(MAX_GIVEN_EXIT);
+			
+			if (Stats.given == parm(Opt->backsub_check)) {
+				int ratio = (Stats.back_subsumed == 0 ?
+							 INT_MAX :
+							 Stats.kept / Stats.back_subsumed);
+				if (ratio > 20) {
+					clear_flag(Opt->back_subsume, TRUE);
+					printf("\nNOTE: Back_subsumption disabled, ratio of kept"
+						   " to back_subsumed is %d (%.2f of %.2f sec).\n",
+						   ratio, clock_seconds(Clocks.back_subsume), user_seconds());
+					fflush(stdout);
+				}
+			}
+			
+			if (flag(Opt->print_given)) {
+				if (given_clause->weight == round(given_clause->weight))
+					printf("\ngiven #%d (%s,wt=%d , Rk = %d): ",
+						   Stats.given, selection_type, (int) given_clause->weight, get_rank(given_clause));
+				else
+					printf("\ngiven #%d (%s,wt=%.3f): ",
+						   Stats.given, selection_type, given_clause->weight);
+				fwrite_clause(stdout, given_clause, CL_FORM_STD);
+			}
+			
+			statistic_actions("given", Stats.given);
+			
+			clist_append(given_clause, Glob.usable);
+			index_clashable(given_clause, INSERT);
+			given_infer(given_clause);
+		}
+	}  // make_inferences
 
 /*************
  *
@@ -2100,427 +2428,427 @@ void auto_denials(Clist sos, Clist usable, Prover_options opt)
 
 static
 void init_search(void)
-{
-  // Initialize clocks.
-  
-  Clocks.pick_given    = clock_init("pick_given");
-  Clocks.infer         = clock_init("infer");
-  Clocks.preprocess    = clock_init("preprocess");
-  Clocks.demod         = clock_init("demod");
-  Clocks.unit_del      = clock_init("unit_deletion");
-  Clocks.redundancy    = clock_init("redundancy");
-  Clocks.conflict      = clock_init("conflict");
-  Clocks.weigh         = clock_init("weigh");
-  Clocks.hints         = clock_init("hints");
-  Clocks.subsume       = clock_init("subsume");
-  Clocks.semantics     = clock_init("semantics");
-  Clocks.back_subsume  = clock_init("back_subsume");
-  Clocks.back_demod    = clock_init("back_demod");
-  Clocks.back_unit_del = clock_init("back_unit_del");
-  Clocks.index         = clock_init("index");
-  Clocks.disable       = clock_init("disable");
-
-  init_actions(Glob.actions,
-	       rebuild_sos_index, done_with_search, infer_outside_loop);
-  init_weight(Glob.weights,
-	      floatparm(Opt->variable_weight),
-	      floatparm(Opt->constant_weight),
-	      floatparm(Opt->not_weight),
-	      floatparm(Opt->or_weight),
-	      floatparm(Opt->sk_constant_weight),
-	      floatparm(Opt->prop_atom_weight),
-	      floatparm(Opt->nest_penalty),
-	      floatparm(Opt->depth_penalty),
-	      floatparm(Opt->var_penalty),
-	      floatparm(Opt->complexity));
-
-  if (Glob.given_selection == NULL)
-    Glob.given_selection = selector_rules_from_options(Opt);
-  else if (flag(Opt->input_sos_first))
-    Glob.given_selection = plist_prepend(Glob.given_selection,
-					 selector_rule_term("I", "high", "age",
-							    "initial",
-							    INT_MAX));
-  init_giv_select(Glob.given_selection);
-
-  Glob.delete_rules = plist_cat(delete_rules_from_options(Opt),
-				Glob.delete_rules);
-
-  init_white_black(Glob.keep_rules, Glob.delete_rules);
-
-  // Term ordering
-
-  printf("\nTerm ordering decisions:\n");
-
-  if (stringparm(Opt->order, "lpo")) {
-    assign_order_method(LPO_METHOD);
-    all_symbols_lrpo_status(LRPO_LR_STATUS);
-    set_lrpo_status(str_to_sn(eq_sym(), 2), LRPO_MULTISET_STATUS);
-  }
-  else if (stringparm(Opt->order, "rpo")) {
-    assign_order_method(RPO_METHOD);
-    all_symbols_lrpo_status(LRPO_MULTISET_STATUS);
-  }
-  else if (stringparm(Opt->order, "kbo")) {
-    assign_order_method(KBO_METHOD);
-  }
-
-  symbol_order(Glob.usable, Glob.sos, Glob.demods, TRUE);
-
-  if (Glob.kbo_weights) {
-    if (!stringparm(Opt->order, "kbo")) {
-      assign_stringparm(Opt->order, "kbo", TRUE);
-      printf("assign(order, kbo), because KB weights were given.\n");
-    }
-    init_kbo_weights(Glob.kbo_weights);
-    print_kbo_weights(stdout);
-  }
-  else if (stringparm(Opt->order, "kbo")) {
-    auto_kbo_weights(Glob.usable, Glob.sos);
-    print_kbo_weights(stdout);
-  }
-
-  if (!flag(Opt->quiet)) {
-    print_rsym_precedence(stdout);
-    print_fsym_precedence(stdout);
-  }
-
-  if (flag(Opt->inverse_order)) {
-    if (exists_preliminary_precedence(FUNCTION_SYMBOL)) {  // lex command
-      if (!flag(Opt->quiet))
-	printf("Skipping inverse_order, because there is a function_order (lex) command.\n");
-    }
-    else if (stringparm(Opt->order, "kbo")) {
-      if (!flag(Opt->quiet))
-	printf("Skipping inverse_order, because term ordering is KBO.\n");
-    }
-    else {
-      BOOL change = inverse_order(Glob.sos);
-      if (!flag(Opt->quiet)) {
-	printf("After inverse_order: ");
-	if (change)
-	  print_fsym_precedence(stdout);
-	else
-	  printf(" (no changes).\n");
-      }
-    }
-  }
-
-  if (stringparm(Opt->eq_defs, "unfold")) {
-    if (exists_preliminary_precedence(FUNCTION_SYMBOL))  // lex command
-      printf("Skipping unfold_eq, because there is a function_order (lex) command.\n");
-    else
-      unfold_eq_defs(Glob.sos, INT_MAX, 3, !flag(Opt->quiet));
-  }
-  else if (stringparm(Opt->eq_defs, "fold")) {
-    if (exists_preliminary_precedence(FUNCTION_SYMBOL))  // lex command
-      printf("Skipping fold_eq, because there is a function_order (lex) command.\n");
-    else {
-      BOOL change = fold_eq_defs(Glob.sos, stringparm(Opt->order, "kbo"));
-      if (!flag(Opt->quiet)) {
-	printf("After fold_eq: ");
-	if (change)
-	  print_fsym_precedence(stdout);
-	else
-	  printf(" (no changes).\n");
-      }
-    }
-  }
-
-  // Automatic inference and processing settings
-  
-  if (flag(Opt->auto_inference))
-    auto_inference(Glob.sos, Glob.usable, Opt);
-
-  if (flag(Opt->auto_process))
-    auto_process(Glob.sos, Glob.usable, Opt);
-
-  // Tell packages about options and other things.
-
-  resolution_options(flag(Opt->ordered_res),
-		     flag(Opt->check_res_instances),
-		     flag(Opt->initial_nuclei),
-		     parm(Opt->ur_nucleus_limit),
-		     flag(Opt->eval_rewrite));
-		     
-  paramodulation_options(flag(Opt->ordered_para),
-			 flag(Opt->check_para_instances),
-			 FALSE,
-			 flag(Opt->basic_paramodulation),
-			 flag(Opt->para_from_vars),
-			 flag(Opt->para_into_vars),
-			 flag(Opt->para_from_small));
-
-}  /* init_search */
+	{
+		// Initialize clocks.
+		
+		Clocks.pick_given    = clock_init("pick_given");
+		Clocks.infer         = clock_init("infer");
+		Clocks.preprocess    = clock_init("preprocess");
+		Clocks.demod         = clock_init("demod");
+		Clocks.unit_del      = clock_init("unit_deletion");
+		Clocks.redundancy    = clock_init("redundancy");
+		Clocks.conflict      = clock_init("conflict");
+		Clocks.weigh         = clock_init("weigh");
+		Clocks.hints         = clock_init("hints");
+		Clocks.subsume       = clock_init("subsume");
+		Clocks.semantics     = clock_init("semantics");
+		Clocks.back_subsume  = clock_init("back_subsume");
+		Clocks.back_demod    = clock_init("back_demod");
+		Clocks.back_unit_del = clock_init("back_unit_del");
+		Clocks.index         = clock_init("index");
+		Clocks.disable       = clock_init("disable");
+		
+		init_actions(Glob.actions,
+					 rebuild_sos_index, done_with_search, infer_outside_loop);
+		init_weight(Glob.weights,
+					floatparm(Opt->variable_weight),
+					floatparm(Opt->constant_weight),
+					floatparm(Opt->not_weight),
+					floatparm(Opt->or_weight),
+					floatparm(Opt->sk_constant_weight),
+					floatparm(Opt->prop_atom_weight),
+					floatparm(Opt->nest_penalty),
+					floatparm(Opt->depth_penalty),
+					floatparm(Opt->var_penalty),
+					floatparm(Opt->complexity));
+		
+		if (Glob.given_selection == NULL)
+			Glob.given_selection = selector_rules_from_options(Opt);
+		else if (flag(Opt->input_sos_first))
+			Glob.given_selection = plist_prepend(Glob.given_selection,
+												 selector_rule_term("I", "high", "age",
+																	"initial",
+																	INT_MAX));
+		init_giv_select(Glob.given_selection);
+		
+		Glob.delete_rules = plist_cat(delete_rules_from_options(Opt),
+									  Glob.delete_rules);
+		
+		init_white_black(Glob.keep_rules, Glob.delete_rules);
+		
+		// Term ordering
+		
+		printf("\nTerm ordering decisions:\n");
+		
+		if (stringparm(Opt->order, "lpo")) {
+			assign_order_method(LPO_METHOD);
+			all_symbols_lrpo_status(LRPO_LR_STATUS);
+			set_lrpo_status(str_to_sn(eq_sym(), 2), LRPO_MULTISET_STATUS);
+		}
+		else if (stringparm(Opt->order, "rpo")) {
+			assign_order_method(RPO_METHOD);
+			all_symbols_lrpo_status(LRPO_MULTISET_STATUS);
+		}
+		else if (stringparm(Opt->order, "kbo")) {
+			assign_order_method(KBO_METHOD);
+		}
+		
+		symbol_order(Glob.usable, Glob.sos, Glob.demods, TRUE);
+		
+		if (Glob.kbo_weights) {
+			if (!stringparm(Opt->order, "kbo")) {
+				assign_stringparm(Opt->order, "kbo", TRUE);
+				printf("assign(order, kbo), because KB weights were given.\n");
+			}
+			init_kbo_weights(Glob.kbo_weights);
+			print_kbo_weights(stdout);
+		}
+		else if (stringparm(Opt->order, "kbo")) {
+			auto_kbo_weights(Glob.usable, Glob.sos);
+			print_kbo_weights(stdout);
+		}
+		
+		if (!flag(Opt->quiet)) {
+			print_rsym_precedence(stdout);
+			print_fsym_precedence(stdout);
+		}
+		
+		if (flag(Opt->inverse_order)) {
+			if (exists_preliminary_precedence(FUNCTION_SYMBOL)) {  // lex command
+				if (!flag(Opt->quiet))
+					printf("Skipping inverse_order, because there is a function_order (lex) command.\n");
+			}
+			else if (stringparm(Opt->order, "kbo")) {
+				if (!flag(Opt->quiet))
+					printf("Skipping inverse_order, because term ordering is KBO.\n");
+			}
+			else {
+				BOOL change = inverse_order(Glob.sos);
+				if (!flag(Opt->quiet)) {
+					printf("After inverse_order: ");
+					if (change)
+						print_fsym_precedence(stdout);
+					else
+						printf(" (no changes).\n");
+				}
+			}
+		}
+		
+		if (stringparm(Opt->eq_defs, "unfold")) {
+			if (exists_preliminary_precedence(FUNCTION_SYMBOL))  // lex command
+				printf("Skipping unfold_eq, because there is a function_order (lex) command.\n");
+			else
+				unfold_eq_defs(Glob.sos, INT_MAX, 3, !flag(Opt->quiet));
+		}
+		else if (stringparm(Opt->eq_defs, "fold")) {
+			if (exists_preliminary_precedence(FUNCTION_SYMBOL))  // lex command
+				printf("Skipping fold_eq, because there is a function_order (lex) command.\n");
+			else {
+				BOOL change = fold_eq_defs(Glob.sos, stringparm(Opt->order, "kbo"));
+				if (!flag(Opt->quiet)) {
+					printf("After fold_eq: ");
+					if (change)
+						print_fsym_precedence(stdout);
+					else
+						printf(" (no changes).\n");
+				}
+			}
+		}
+		
+		// Automatic inference and processing settings
+		
+		if (flag(Opt->auto_inference))
+			auto_inference(Glob.sos, Glob.usable, Opt);
+		
+		if (flag(Opt->auto_process))
+			auto_process(Glob.sos, Glob.usable, Opt);
+		
+		// Tell packages about options and other things.
+		
+		resolution_options(flag(Opt->ordered_res),
+						   flag(Opt->check_res_instances),
+						   flag(Opt->initial_nuclei),
+						   parm(Opt->ur_nucleus_limit),
+						   flag(Opt->eval_rewrite));
+		
+		paramodulation_options(flag(Opt->ordered_para),
+							   flag(Opt->check_para_instances),
+							   FALSE,
+							   flag(Opt->basic_paramodulation),
+							   flag(Opt->para_from_vars),
+							   flag(Opt->para_into_vars),
+							   flag(Opt->para_from_small));
+		
+	}  /* init_search */
 
 /*************
  *
  *   index_and_process_initial_clauses()
  *
  *************/
-
-static
-void index_and_process_initial_clauses(void)
-{
-  Clist_pos p;
-  Clist temp_sos;
-
-  // Index Usable clauses if hyper, UR, or binary-res are set.
-
-  Glob.use_clash_idx = (flag(Opt->binary_resolution) ||
-			flag(Opt->neg_binary_resolution) ||
-			flag(Opt->pos_hyper_resolution) ||
-			flag(Opt->neg_hyper_resolution) ||
-			flag(Opt->pos_ur_resolution) ||
-			flag(Opt->neg_ur_resolution));
-
-  // Allocate and initialize indexes (even if they won't be used).
-
-  init_literals_index();  // fsub, bsub, fudel, budel, ucon
-
-  init_demodulator_index(DISCRIM_BIND, ORDINARY_UNIF, 0);
-
-  init_back_demod_index(FPA, ORDINARY_UNIF, 10);
-
-  Glob.clashable_idx = lindex_init(FPA, ORDINARY_UNIF, 10,
-				   FPA, ORDINARY_UNIF, 10);
-
-  init_hints(ORDINARY_UNIF, Att.bsub_hint_wt,
-	     flag(Opt->collect_hint_labels),
-	     flag(Opt->back_demod_hints),
-	     demodulate_clause);
-  init_semantics(Glob.interps, Clocks.semantics,
-		 stringparm1(Opt->multiple_interps),
-		 parm(Opt->eval_limit),
-		 parm(Opt->eval_var_limit));
-
-  // Do Sos and Denials last, in case we PROCESS_INITIAL_SOS.
-
-  ////////////////////////////////////////////////////////////////////////////
-  // Usable
-
-  for (p = Glob.usable->first; p != NULL; p = p->next) {
-    Topform c = p->c;
-    assign_clause_id(c);
-    mark_maximal_literals(c->literals);
-    mark_selected_literals(c->literals, stringparm1(Opt->literal_selection));
-    if (flag(Opt->dont_flip_input))
-      orient_equalities(c, FALSE);  // mark, but don't allow flips
-    else
-      c = orient_input_eq(c);  /* this replaces c if any flipping occurs */
-    index_literals(c, INSERT, Clocks.index, FALSE);
-    index_back_demod(c, INSERT, Clocks.index, flag(Opt->back_demod));
-    index_clashable(c, INSERT);
-  }
-
-  ////////////////////////////////////////////////////////////////////////////
-  // Demodulators
-
-  if (!clist_empty(Glob.demods) && !flag(Opt->eval_rewrite)) {
-    fflush(stdout);
-    bell(stderr);
-    fprintf(stderr,
-	    "\nWARNING: The use of input demodulators is not well tested\n"
-	    "and discouraged.  You might need to clear(process_initial_sos)\n"
-	    "so that sos clauses are not rewritten and deleted.\n");
-    fflush(stderr);
-  }
-
-  for (p = Glob.demods->first; p != NULL; p = p->next) {
-    Topform c = p->c;
-    assign_clause_id(c);
-    if (flag(Opt->eval_rewrite)) {
-      if (c->is_formula) {
-	/* make it into a pseudo-clause */
-	c->literals = new_literal(TRUE, formula_to_term(c->formula));
-	upward_clause_links(c);
-	zap_formula(c->formula);
-	c->formula = NULL;
-	c->is_formula = FALSE;
-	clause_set_variables(c, MAX_VARS);
-	mark_oriented_eq(c->literals->atom);
-      }
-    }
-    else {
-      if (!pos_eq_unit(c->literals))
-	fatal_error("input demodulator is not equation");
-      else {
-	int type;
-	if (flag(Opt->dont_flip_input))
-	  orient_equalities(c, FALSE);  /* don't allow flips */
-	else
-	  c = orient_input_eq(c);  /* this replaces c if any flipping occurs */
-	if (c->justification->next != NULL) {
-	  printf("\nNOTE: input demodulator %d has been flipped.\n", c->id);
-	  fflush(stdout);
-	  fprintf(stderr, "\nNOTE: input demodulator %d has been flipped.\n",
-		  c->id);
-	  if (flag(Opt->bell))
-	    bell(stderr);
-	  fflush(stderr);
-	}
-	type = demodulator_type(c,
-				parm(Opt->lex_dep_demod_lim),
-				flag(Opt->lex_dep_demod_sane));
-	if (flag(Opt->dont_flip_input) &&
-	    type != ORIENTED &&
-	    !renamable_flip_eq(c->literals->atom)) {
-	  type = ORIENTED;  /* let the user beware */
-	  mark_oriented_eq(c->literals->atom);
-	  bell(stderr);
-	  fprintf(stderr,"\nWARNING: demodulator does not satisfy term order\n");
-	  fflush(stderr);
-	  printf("\nWARNING: demodulator does not satisfy term order: ");
-	  f_clause(c);
-	  fflush(stdout);
-	}
-	else if (type == NOT_DEMODULATOR) {
-	  Term a = ARG(c->literals->atom,0);
-	  Term b = ARG(c->literals->atom,1);
-	  printf("bad input demodulator: "); f_clause(c);
-	  if (term_ident(a, b))
-	    fatal_error("input demodulator is instance of x=x");
-	  else if (!variables_subset(a, b) && !variables_subset(b, a))
-	    fatal_error("input demoulator does not have var-subset property");
-	  else
-	    fatal_error("input demoulator not allowed");
-	}
-	index_demodulator(c, type, INSERT, Clocks.index);
-      }
-    }
-  }
-
-  if (flag(Opt->eval_rewrite))
-    init_dollar_eval(Glob.demods);
-
-  ////////////////////////////////////////////////////////////////////////////
-  // Hints
-  
-  if (Glob.hints->first) {
-    for (p = Glob.hints->first; p != NULL; p = p->next) {
-      Topform h = p->c;
-      // assign_clause_id(h);  // This should be optional
-      orient_equalities(h, TRUE);
-      renumber_variables(h, MAX_VARS);
-      index_hint(h);
-    }
-  }
-
-  ////////////////////////////////////////////////////////////////////////////
-  // Sos
-
-  // Move Sos to a temporary list, then process that temporary list,
-  // putting the clauses back into Sos in the "correct" way, either
-  // by calling cl_process() or doing it here.
-
-  temp_sos = Glob.sos;                    // move Sos to a temporary list
-  name_clist(temp_sos, "temp_sos");       // not really necessary
-  Glob.sos = clist_init("sos");           // get a new (empty) Sos list
-
-  if (flag(Opt->process_initial_sos)) {
-
-    if (flag(Opt->print_initial_clauses))
-      printf("\n");
-
-    while (temp_sos->first) {
-      Topform c = temp_sos->first->c;
-      Topform new;
-      clist_remove(c, temp_sos);
-      clist_append(c, Glob.disabled);
-      
-      new = copy_inference(c);  // c has no ID, so this is tricky
-      cl_process_simplify(new);
-      if (new->justification->next == NULL) {
-	// No simplification occurred, so make it a clone of the parent.
-	zap_just(new->justification);
-	new->justification = copy_justification(c->justification);
-	// Get all attributes, not just inheritable ones.
-	zap_attributes(new->attributes);
-	new->attributes = copy_attributes(c->attributes);
-      }
-      else {
-	// Simplification occurs, so make it a child of the parent.
-	assign_clause_id(c);
-	new->justification->u.id = c->id;
-	if (flag(Opt->print_initial_clauses)) {
-	  printf("           ");
-	  fwrite_clause(stdout, c, CL_FORM_STD);
-	}
-      }
-      cl_process(new);  // This re-simplifies, but that's ok.
-    }
-    // This will put processed clauses back into Sos.
-    limbo_process(TRUE);  // back subsumption and back demodulation.
-
-  }
-  else {
-    /* not processing initial sos */
-    fflush(stdout);
-    bell(stderr);
-    fprintf(stderr,
-	    "\nWARNING: clear(process_initial_sos) is not well tested.\n"
-	    "We usually recommend against using it.\n");
-    fflush(stderr);
-    
-    /* not applying full processing to initial sos */
-    while (temp_sos->first) {
-      Topform c = temp_sos->first->c;
-      clist_remove(c, temp_sos);
-
-      if (number_of_literals(c->literals) == 0)
-	/* in case $F is in input, or if predicate elimination finds proof */
-	handle_proof_and_maybe_exit(c);
-      else {
-	assign_clause_id(c);
-	if (flag(Opt->dont_flip_input))
-	  orient_equalities(c, FALSE);
-	else
-	  c = orient_input_eq(c);
-	mark_maximal_literals(c->literals);
-	mark_selected_literals(c->literals,
-			       stringparm1(Opt->literal_selection));
-	c->weight = clause_weight(c->literals);
-	if (!clist_empty(Glob.hints)) {
-	  clock_start(Clocks.hints);
-	  adjust_weight_with_hints(c,
-				   flag(Opt->degrade_hints),
-				   flag(Opt->breadth_first_hints));
-	  clock_stop(Clocks.hints);
-	}
-
-	c->initial = TRUE;
-	insert_into_sos2(c, Glob.sos);
-	index_literals(c, INSERT, Clocks.index, FALSE);
-	index_back_demod(c, INSERT, Clocks.index, flag(Opt->back_demod));
-      }
-    }
-  }
-
-  clist_zap(temp_sos);  // free the temporary list
-
-  ////////////////////////////////////////////////////////////////////////////
-  // Print
-
-  print_separator(stdout, "end of process initial clauses", TRUE);
-
-  print_separator(stdout, "CLAUSES FOR SEARCH", TRUE);
-
-  if (flag(Opt->print_initial_clauses)) {
-    printf("\n%% Clauses after input processing:\n");
-    fwrite_clause_clist(stdout,Glob.usable,  CL_FORM_STD);
-    fwrite_clause_clist(stdout,Glob.sos,     CL_FORM_STD);
-    fwrite_demod_clist(stdout,Glob.demods,   CL_FORM_STD);
-  }
-  if (Glob.hints->length > 0) {
-      int redundant = redundant_hints();
-      printf("\n%% %d hints (%d processed, %d redundant).\n",
-	     Glob.hints->length - redundant, Glob.hints->length, redundant);
-    }
-
-  print_separator(stdout, "end of clauses for search", TRUE);
-
-}  // index_and_process_initial_clauses
-
+	static
+	void index_and_process_initial_clauses(void)
+	{
+		Clist_pos p;
+		Clist temp_sos;
+		
+		// Index Usable clauses if hyper, UR, or binary-res are set.
+		
+		Glob.use_clash_idx = (flag(Opt->binary_resolution) ||
+							  flag(Opt->neg_binary_resolution) ||
+							  flag(Opt->pos_hyper_resolution) ||
+							  flag(Opt->neg_hyper_resolution) ||
+							  flag(Opt->pos_ur_resolution) ||
+							  flag(Opt->neg_ur_resolution));
+		
+		// Allocate and initialize indexes (even if they won't be used).
+		
+		init_literals_index();  // fsub, bsub, fudel, budel, ucon
+		
+		init_demodulator_index(DISCRIM_BIND, ORDINARY_UNIF, 0);
+		
+		init_back_demod_index(FPA, ORDINARY_UNIF, 10);
+		
+		Glob.clashable_idx = lindex_init(FPA, ORDINARY_UNIF, 10,
+										 FPA, ORDINARY_UNIF, 10);
+		
+		init_hints(ORDINARY_UNIF, Att.bsub_hint_wt,
+				   flag(Opt->collect_hint_labels),
+				   flag(Opt->back_demod_hints),
+				   demodulate_clause);
+		init_semantics(Glob.interps, Clocks.semantics,
+					   stringparm1(Opt->multiple_interps),
+					   parm(Opt->eval_limit),
+					   parm(Opt->eval_var_limit));
+		
+		// Do Sos and Denials last, in case we PROCESS_INITIAL_SOS.
+		
+		////////////////////////////////////////////////////////////////////////////
+		// Usable
+		
+		for (p = Glob.usable->first; p != NULL; p = p->next) {
+			Topform c = p->c;
+			assign_clause_id(c);
+			mark_maximal_literals(c->literals);
+			mark_selected_literals(c->literals, stringparm1(Opt->literal_selection));
+			if (flag(Opt->dont_flip_input))
+				orient_equalities(c, FALSE);  // mark, but don't allow flips
+			else
+				c = orient_input_eq(c);  /* this replaces c if any flipping occurs */
+			index_literals(c, INSERT, Clocks.index, FALSE);
+			index_back_demod(c, INSERT, Clocks.index, flag(Opt->back_demod));
+			index_clashable(c, INSERT);
+		}
+		
+		////////////////////////////////////////////////////////////////////////////
+		// Demodulators
+		
+		if (!clist_empty(Glob.demods) && !flag(Opt->eval_rewrite)) {
+			fflush(stdout);
+			bell(stderr);
+			fprintf(stderr,
+					"\nWARNING: The use of input demodulators is not well tested\n"
+					"and discouraged.  You might need to clear(process_initial_sos)\n"
+					"so that sos clauses are not rewritten and deleted.\n");
+			fflush(stderr);
+		}
+		
+		for (p = Glob.demods->first; p != NULL; p = p->next) {
+			Topform c = p->c;
+			assign_clause_id(c);
+			if (flag(Opt->eval_rewrite)) {
+				if (c->is_formula) {
+					/* make it into a pseudo-clause */
+					c->literals = new_literal(TRUE, formula_to_term(c->formula));
+					upward_clause_links(c);
+					zap_formula(c->formula);
+					c->formula = NULL;
+					c->is_formula = FALSE;
+					clause_set_variables(c, MAX_VARS);
+					mark_oriented_eq(c->literals->atom);
+				}
+			}
+			else {
+				if (!pos_eq_unit(c->literals))
+					fatal_error("input demodulator is not equation");
+				else {
+					int type;
+					if (flag(Opt->dont_flip_input))
+						orient_equalities(c, FALSE);  /* don't allow flips */
+					else
+						c = orient_input_eq(c);  /* this replaces c if any flipping occurs */
+					if (c->justification->next != NULL) {
+						printf("\nNOTE: input demodulator %d has been flipped.\n", c->id);
+						fflush(stdout);
+						fprintf(stderr, "\nNOTE: input demodulator %d has been flipped.\n",
+								c->id);
+						if (flag(Opt->bell))
+							bell(stderr);
+						fflush(stderr);
+					}
+					type = demodulator_type(c,
+											parm(Opt->lex_dep_demod_lim),
+											flag(Opt->lex_dep_demod_sane));
+					if (flag(Opt->dont_flip_input) &&
+						type != ORIENTED &&
+						!renamable_flip_eq(c->literals->atom)) {
+						type = ORIENTED;  /* let the user beware */
+						mark_oriented_eq(c->literals->atom);
+						bell(stderr);
+						fprintf(stderr,"\nWARNING: demodulator does not satisfy term order\n");
+						fflush(stderr);
+						printf("\nWARNING: demodulator does not satisfy term order: ");
+						f_clause(c);
+						fflush(stdout);
+					}
+					else if (type == NOT_DEMODULATOR) {
+						Term a = ARG(c->literals->atom,0);
+						Term b = ARG(c->literals->atom,1);
+						printf("bad input demodulator: "); f_clause(c);
+						if (term_ident(a, b))
+							fatal_error("input demodulator is instance of x=x");
+						else if (!variables_subset(a, b) && !variables_subset(b, a))
+							fatal_error("input demoulator does not have var-subset property");
+						else
+							fatal_error("input demoulator not allowed");
+					}
+					index_demodulator(c, type, INSERT, Clocks.index);
+				}
+			}
+		}
+		
+		if (flag(Opt->eval_rewrite))
+			init_dollar_eval(Glob.demods);
+		
+		////////////////////////////////////////////////////////////////////////////
+		// Hints
+		
+		if (Glob.hints->first) {
+			for (p = Glob.hints->first; p != NULL; p = p->next) {
+				Topform h = p->c;
+				// assign_clause_id(h);  // This should be optional
+				orient_equalities(h, TRUE);
+				renumber_variables(h, MAX_VARS);
+				index_hint(h);
+			}
+		}
+		
+		////////////////////////////////////////////////////////////////////////////
+		// Sos
+		
+		// Move Sos to a temporary list, then process that temporary list,
+		// putting the clauses back into Sos in the "correct" way, either
+		// by calling cl_process() or doing it here.
+		
+		temp_sos = Glob.sos;                    // move Sos to a temporary list
+		name_clist(temp_sos, "temp_sos");       // not really necessary
+		Glob.sos = clist_init("sos");           // get a new (empty) Sos list
+		
+		if (flag(Opt->process_initial_sos)) {
+			
+			if (flag(Opt->print_initial_clauses))
+				printf("\n");
+			
+			while (temp_sos->first) {
+				Topform c = temp_sos->first->c;
+				Topform new;
+				clist_remove(c, temp_sos);
+				clist_append(c, Glob.disabled);
+				
+				new = copy_inference(c);  // c has no ID, so this is tricky
+				cl_process_simplify(new);
+				if (new->justification->next == NULL) {
+					// No simplification occurred, so make it a clone of the parent.
+					zap_just(new->justification);
+					new->justification = copy_justification(c->justification);
+					// Get all attributes, not just inheritable ones.
+					zap_attributes(new->attributes);
+					new->attributes = copy_attributes(c->attributes);
+				}
+				else {
+					// Simplification occurs, so make it a child of the parent.
+					assign_clause_id(c);
+					new->justification->u.id = c->id;
+					if (flag(Opt->print_initial_clauses)) {
+						printf("           ");
+						fwrite_clause(stdout, c, CL_FORM_STD);
+					}
+				}
+				cl_process(new);  // This re-simplifies, but that's ok.
+			}
+			// This will put processed clauses back into Sos.
+			limbo_process(TRUE);  // back subsumption and back demodulation.
+			
+		}
+		else {
+			/* not processing initial sos */
+			fflush(stdout);
+			bell(stderr);
+			fprintf(stderr,
+					"\nWARNING: clear(process_initial_sos) is not well tested.\n"
+					"We usually recommend against using it.\n");
+			fflush(stderr);
+			
+			/* not applying full processing to initial sos */
+			while (temp_sos->first) {
+				Topform c = temp_sos->first->c;
+				clist_remove(c, temp_sos);
+				
+				if (number_of_literals(c->literals) == 0)
+				/* in case $F is in input, or if predicate elimination finds proof */
+					handle_proof_and_maybe_exit(c);
+				else {
+					assign_clause_id(c);
+					if (flag(Opt->dont_flip_input))
+						orient_equalities(c, FALSE);
+					else
+						c = orient_input_eq(c);
+					mark_maximal_literals(c->literals);
+					mark_selected_literals(c->literals,
+										   stringparm1(Opt->literal_selection));
+					c->weight = clause_weight(c->literals);
+					if (!clist_empty(Glob.hints)) {
+						clock_start(Clocks.hints);
+						adjust_weight_with_hints(c,
+												 flag(Opt->degrade_hints),
+												 flag(Opt->breadth_first_hints));
+						clock_stop(Clocks.hints);
+					}
+					
+					c->initial = TRUE;
+					insert_into_sos2(c, Glob.sos);
+					index_literals(c, INSERT, Clocks.index, FALSE);
+					index_back_demod(c, INSERT, Clocks.index, flag(Opt->back_demod));
+				}
+			}
+		}
+		
+		clist_zap(temp_sos);  // free the temporary list
+		
+		////////////////////////////////////////////////////////////////////////////
+		// Print
+		
+		print_separator(stdout, "end of process initial clauses", TRUE);
+		
+		print_separator(stdout, "CLAUSES FOR SEARCH", TRUE);
+		
+		if (flag(Opt->print_initial_clauses)) {
+			printf("\n%% Clauses after input processing:\n");
+			fwrite_clause_clist(stdout,Glob.usable,  CL_FORM_STD);
+			fwrite_clause_clist(stdout,Glob.sos,     CL_FORM_STD);
+			fwrite_demod_clist(stdout,Glob.demods,   CL_FORM_STD);
+		}
+		if (Glob.hints->length > 0) {
+			int redundant = redundant_hints();
+			printf("\n%% %d hints (%d processed, %d redundant).\n",
+				   Glob.hints->length - redundant, Glob.hints->length, redundant);
+		}
+		
+		print_separator(stdout, "end of clauses for search", TRUE);
+		
+	}  // index_and_process_initial_clauses
+	
+	
 /*************
  *
  *   fatal_setjmp()
@@ -2563,6 +2891,39 @@ Prover_results collect_prover_results(BOOL xproofs)
   results->return_code = Glob.return_code;
   return results;
 }  /* collect_prover_results */
+	
+	
+	
+	
+	/*************
+	 *
+	 *   collect_prover_results2()
+	 *
+	 *************/
+	
+	static
+	Prover_results collect_prover_results2(BOOL xproofs)
+	{
+		Plist p;
+		Prover_results results = calloc(1, sizeof(struct prover_results));
+		
+		/*for (p = Glob.empties; p; p = p->next) {
+			Plist proof = get_clause_ancestors(p->v);
+			uncompress_clauses(proof);
+			results->proofs = plist_append(results->proofs, proof);
+			if (xproofs) {
+				Plist xproof = proof_to_xproof(proof);
+				results->xproofs = plist_append(results->xproofs, xproof);
+			}
+		}*/
+		results->xproofs = Glob.SI;
+		update_stats();  /* puts package stats into Stats */
+		results->stats = Stats;  /* structure copy */
+		results->user_seconds = user_seconds();
+		results->system_seconds = system_seconds();
+		results->return_code = Glob.return_code;
+		return results;
+	}  /* collect_prover_results2 */
 
 /*************
  *
@@ -2624,7 +2985,232 @@ void basic_clause_properties(Clist sos, Clist usable)
   zap_plist(sos_temp);
   zap_plist(usable_temp);
 }  /* basic_clause_properties */
+	
+/***************************************************  Modif **************************** */
+	/*************
+	 *
+	 *   fixed_point2()
+	 *
+	 *************/
+	// implement the fixed point algorithm cycle2
+	
+	BOOL fixed_point2(int I, int J, Plist Si, Plist Sij, Plist ancestors_of_EmptyCl){
+		Plist tmp, ancestor,t;
+		BOOL B = FALSE;
+		//printf(" A ");
+		if ( isEmpty(Si) || isEmpty(Sij)) {
+			//if ((!(generates(I, Si, Sij)) || isEmpty(Si)) || isEmpty(Sij)) {
+			//printf(" Sij is not generated by Si \n");
+			//printf("isEmpty(Si) = %d \n", isEmpty(Si));
+			//printf("isEmpty(Sij) = %d \n", isEmpty(Sij));
+			//p_plist(Si);
+			//p_plist(Sij);
+			return FALSE;
+		}
+		else {
+			
+			Topform Ci = find_notsubsumedcl(Si, Sij, J);
+			//Topform Ci = find_notequalcl(Si, Sij, J);
+			//printf("T0");p_clause(Ci);printf("T1");
+			//Topform Ci = unshift(Cij);
+			//printf("QQ");
+			if (Ci == NULL || pureparam_cst_topform(Ci)){
+				//printf("OOO");
+				//printf(" FSI = ");p_plist(Si);
+				//printf(" FSIJ = ");p_plist(Sij);
+				for (tmp = Sij; tmp; tmp = tmp->next) {
+					B=FALSE;
+					for (t = Si; t; t = t->next) {
+						Topform cpij = shift_cl(t->v, J);
+						if(clause_ident_order(tmp->v,cpij))
+						   {
+							   B = TRUE;
+						   }
+					}					
+					if(!B) {
+						
+						Sij=plist_remove_clause(Sij, tmp->v);
+						
+					}
+					//printf(" ZO ");p_plist(ancestor);printf(" Z1 \n");
+				}
+				
+				Glob.SI = Si;
+				Glob.SIJ = Sij;
+				
+				return TRUE;
+			}
+			else{
+				
+				Si=plist_remove_clause(Si, Ci);
+				//printf(" KO ");p_clause(Ci);printf(" K1 \n");
+				if (plist_member_clause(ancestors_of_EmptyCl, Ci)) {
+					//p_plist(ancestors_of_EmptyCl);
+					//printf("F %d F", generates1(Si,));
+					//p_clause(Ci);
+					//printf("coucou2");
+					return FALSE;
+				}
+				
+				
+				else {
+					//printf("Si");p_plist(Si);p_plist(Sij);printf("Sij");
+					
+					for (tmp = Sij; tmp; tmp = tmp->next) {
+						B=FALSE;
+						if (is_ancestor(I,Ci,tmp->v)) {
+							Sij=plist_remove_clause(Sij, tmp->v);
+						}							
+							
+					}
+					return fixed_point2(I, J, Si, Sij, ancestors_of_EmptyCl);
+				}
+			}
+			
+		}
+		
+	}
+	
 
+ 
+/*+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
+	/*************
+	 *
+	 *   fixed_point1()
+	 *
+	 *************/
+	// implement the fixed point algorithm cycle1.
+	
+	BOOL fixed_point1(int I, int J, Plist Sinit, Plist Sloop, Plist Sij, BOOL index_flat){
+		Plist tmp,Sitmp,p,tmp0;
+		Topform Cij,C,t;
+		BOOL B = TRUE;
+		BOOL exists_shift = TRUE;
+		Sitmp = NULL;
+		Plist Slooptmp = NULL;
+		//printf("S1i ");p_plist(Sinit);
+		//printf("S1ij ");p_plist(Sloop);
+		int Isij, Isi;
+		Isij = plist_count(Sij);
+		Isi  = plist_count(Sinit);
+		if (Isi > Isij) {
+			return FALSE;
+		}
+		if ( isEmpty(Sinit) || isEmpty(Sij)) {
+			return FALSE;
+		}
+		else {
+			//printf("S2i ");p_plist(Sinit);
+			//printf("S2ij ");p_plist(Sloop);
+			//Cij = shift_equal(I,J,Si,Sij);
+			p = Sinit;
+			while ( p && exists_shift) {
+				t = (Topform)p->v;
+				//printf(" t = ");p_clause(t);printf(" false = ");printf("%d",false_clause(t->literals));
+				if (t == NULL || false_clause(t->literals)) {
+					//printf(" false = ");p_clause(t);
+					Sinit=plist_remove_clause(Sinit, t);
+					p = p->next;
+				}
+				else {
+					C = shift_cl(t, J);
+					//printf("C "); p_clause(Cij);
+					Cij = plist_member_clause_shift(Sij, C);
+					//printf("Cij "); p_clause(Cij);
+					if (Cij != NULL) {
+						if(!plist_member_clause(Sloop, Cij)){
+							//printf("S2i ");p_plist(Sinit);
+							//printf("S2ij ");p_plist(Sloop);
+							//printf("Cij1 "); p_clause(Cij);
+							
+							tmp = get_clause_ancestors_ofrank2(Cij, I,index_flat);
+							//printf("tmp ");p_plist(tmp);
+							tmp0 = plist_subtract(tmp, Sitmp);
+							Sitmp = plist_cat(tmp0, Sitmp);
+							//printf("Sitmp ");p_plist(Sitmp);
+							Slooptmp=plist_prepend(Slooptmp, Cij);
+							//printf("Slooptmp ");p_plist(Slooptmp);
+							B=FALSE;
+						}
+						p = p->next;
+					}
+					else {
+						//printf("SS");
+						exists_shift = FALSE;
+						
+						
+					}
+				}
+			
+				
+			}
+			if (!exists_shift) {
+				printf(" This clause has not a shift in S_loop : ");
+				//p_clause(t);
+				return FALSE;
+			}
+			
+			if (B) {
+				Glob.SI = Sinit;
+				Glob.SIJ = Sloop;
+				printf("+++++++ Cycle detected +++++++++");
+				return TRUE;
+			}
+			else {
+				
+				Sloop = plist_cat(Slooptmp, Sloop);
+				Sitmp = plist_subtract(Sitmp, Sinit);
+				Sinit = plist_cat(Sinit, Sitmp);
+				//printf("Sinit ");p_plist(Sinit);
+				return fixed_point1(I,J,Sinit,Sloop,Sij,index_flat);
+			}
+
+
+			
+		}
+
+	}
+/*....................................................*/	
+	BOOL fixed_point(int I, int J, Clist sos, Clist usable){
+		Glob.number_of_calls++;
+		Ilist Tested_EmptyCl = NULL;
+		Plist tmp,p;
+		Plist p1 = copy_clist_to_plist_shallow(sos);
+		Plist p2  = copy_clist_to_plist_shallow(usable);
+		Plist all_clauses =  plist_cat(p1, p2);
+		Plist Sloop = NULL;
+		Plist Sij=look_by_rank2(all_clauses, J,flag(Opt->index_flat));
+		//BOOL index_flat = TRUE;
+		Plist EmptyCl = level_empty_clause2(Glob.rank_emptycl, I, J);
+		//printf("EmptyCl ");p_plist(EmptyCl);
+		Plist Ancestors = get_ancestors_of_rank2(I,EmptyCl,flag(Opt->index_flat));
+		//printf("Si ");p_plist(Ancestors);
+		BOOL Done = TRUE;
+		
+		if (flag(Opt->cycle1)) {
+			printf("============= Cycle1 ============\n ");
+			Ancestors = plist_subtract(Ancestors, EmptyCl);
+			
+			return fixed_point1(I, J, Ancestors, Sloop, Sij,flag(Opt->index_flat));
+		}
+		else if(flag(Opt->cycle2)){
+			printf("============= Cycle2 ============ \n");
+			Plist Si = look_by_rank2(all_clauses, I,flag(Opt->index_flat));
+			Si = plist_subtract(Si, EmptyCl);
+			
+			return fixed_point2(I, J, Si, Sij, Ancestors);
+		}
+		else {
+			fatal_error("fixed_point : neither cycle1 nor cycle2 is set ");
+		}
+
+
+		
+		
+	} 
+ 
+  /************************************************ End Modif ****************************/
+ 
 /*************
  *
  *   search()
@@ -2635,115 +3221,202 @@ void basic_clause_properties(Clist sos, Clist usable)
 */
 
 /* PUBLIC */
-Prover_results search(Prover_input p)
-{
-  int return_code = setjmp(Jump_env);
-  if (return_code != 0) {
-    // we just landed from longjmp(); fix return code and return
-    print_separator(stdout, "end of search", TRUE);
-    Glob.return_code = (return_code == INT_MAX ? 0 : return_code);
-    fatal_setjmp();  /* This makes longjmps cause a fatal_error. */
-    return collect_prover_results(p->xproofs);
-  }
-  else {
-    // search for a proof
-
-    print_separator(stdout, "PROCESS INITIAL CLAUSES", TRUE);
-
-    Opt = p->options;          // put options into a global variable
-    Glob.initialized = TRUE;   // this signifies that Glob is being used
-
-    Glob.start_time  = user_seconds();
-    Glob.start_ticks = bogo_ticks();
-
-    if (flag(Opt->sort_initial_sos) && plist_count(p->sos) <= 100)
-      p->sos = sort_plist(p->sos,
-			  (Ordertype (*)(void*, void*)) clause_compare_m4);
-
-    // Move clauses and term lists into Glob; do not assign IDs to clauses.
-
-    Glob.usable  = move_clauses_to_clist(p->usable, "usable", FALSE);
-    Glob.sos     = move_clauses_to_clist(p->sos, "sos", FALSE);
-    Glob.demods  = move_clauses_to_clist(p->demods,"demodulators",FALSE);
-    Glob.hints   = move_clauses_to_clist(p->hints, "hints", FALSE);
-
-    Glob.weights          = tlist_copy(p->weights);
-    Glob.kbo_weights      = tlist_copy(p->kbo_weights);
-    Glob.actions          = tlist_copy(p->actions);
-    Glob.interps          = tlist_copy(p->interps);
-    Glob.given_selection  = tlist_copy(p->given_selection);
-    Glob.keep_rules       = tlist_copy(p->keep_rules);
-    Glob.delete_rules     = tlist_copy(p->delete_rules);
-
-    // Allocate auxiliary clause lists.
-
-    Glob.limbo    = clist_init("limbo");
-    Glob.disabled = clist_init("disabled");
-    Glob.empties  = NULL;
-
-    if (flag(Opt->print_initial_clauses)) {
-      printf("\n%% Clauses before input processing:\n");
-      fwrite_clause_clist(stdout, Glob.usable,  CL_FORM_STD);
-      fwrite_clause_clist(stdout, Glob.sos,     CL_FORM_STD);
-      fwrite_clause_clist(stdout, Glob.demods,  CL_FORM_STD);
-      if (Glob.hints->length > 0)
-	printf("\n%% %d hints input.\n", Glob.hints->length);
-    }
-    
-    // Predicate elimination (may add to sos and move clauses to disabled)
-
-    if (flag(p->options->predicate_elim) && clist_empty(Glob.usable)) {
-      print_separator(stdout, "PREDICATE ELIMINATION", TRUE);
-      predicate_elimination(Glob.sos, Glob.disabled, !flag(Opt->quiet));
-      print_separator(stdout, "end predicate elimination", TRUE);
-    }
-
-    basic_clause_properties(Glob.sos, Glob.usable);
-    
-    // Possible special treatment for denials (negative in Horn sets)
-
-    if (flag(Opt->auto_denials))
-      auto_denials(Glob.sos, Glob.usable, Opt);
-
-    init_search();  // init clocks, ordering, auto-mode, init packages
-    
-    index_and_process_initial_clauses();
-
-    print_separator(stdout, "SEARCH", TRUE);
-
-    printf("\n%% Starting search at %.2f seconds.\n", user_seconds());
-    fflush(stdout);
-    Glob.start_time = user_seconds();
-    Glob.searching = TRUE;
-
-    // ****************************** Main Loop ******************************
-
-    while (inferences_to_make()) {
-
-      // make_inferences: each inferred clause is cl_processed, which
-      // does forward demodulation and subsumption; if the clause is kept
-      // it is put on the Limbo list, and it is indexed so that it can be
-      // used immediately with subsequent newly inferred clauses.
-
-      make_inferences();
-
-      // limbo_process: this applies back subsumption, back demodulation,
-      // and other operations that can disable clauses.  Limbo clauses
-      // are moved to the Sos list.
-
-      limbo_process(FALSE);
-
-    }  // ************************ end of main loop ************************
-
-    fprint_all_stats(stdout, Opt ? stringparm1(Opt->stats) : "lots");
-    print_separator(stdout, "end of search", TRUE);
-    fatal_setjmp();  /* This makes longjmps cause a fatal_error. */
-    Glob.return_code = SOS_EMPTY_EXIT;
-    return collect_prover_results(p->xproofs);
-  }
-}  /* search */
-
-/*************
+	Prover_results search(Prover_input p)
+	{
+		/*********************Modif********************/
+		Glob.admissible = TRUE; // At the begining the class is admissible
+		Glob.rank_emptycl = NULL;
+		Glob.number_of_calls = 0;
+		Glob.current_rank = 0;
+		//Glob.rank_emptycl = get_plist();
+		int return_code = setjmp(Jump_env);
+		if (return_code != 0) {
+			// we just landed from longjmp(); fix return code and return
+			print_separator(stdout, "end of search", TRUE);
+			Glob.return_code = (return_code == INT_MAX ? 0 : return_code);
+			fatal_setjmp();  /* This makes longjmps cause a fatal_error. */
+			return collect_prover_results(p->xproofs);
+		}
+		else {
+			// search for a proof
+			
+			print_separator(stdout, "PROCESS INITIAL CLAUSES", TRUE);
+			
+			Opt = p->options;          // put options into a global variable
+			Glob.initialized = TRUE;   // this signifies that Glob is being used
+			
+			Glob.start_time  = user_seconds();
+			Glob.start_ticks = bogo_ticks();
+			
+			if (flag(Opt->sort_initial_sos) && plist_count(p->sos) <= 100)
+				p->sos = sort_plist(p->sos,
+									(Ordertype (*)(void*, void*)) clause_compare_m4);
+			
+			// Move clauses and term lists into Glob; do not assign IDs to clauses.
+			
+			Glob.usable  = move_clauses_to_clist(p->usable, "usable", FALSE);
+			Glob.sos     = move_clauses_to_clist(p->sos, "sos", FALSE);
+			Glob.demods  = move_clauses_to_clist(p->demods,"demodulators",FALSE);
+			Glob.hints   = move_clauses_to_clist(p->hints, "hints", FALSE);
+			
+			Glob.weights          = tlist_copy(p->weights);
+			Glob.kbo_weights      = tlist_copy(p->kbo_weights);
+			Glob.actions          = tlist_copy(p->actions);
+			Glob.interps          = tlist_copy(p->interps);
+			Glob.given_selection  = tlist_copy(p->given_selection);
+			Glob.keep_rules       = tlist_copy(p->keep_rules);
+			Glob.delete_rules     = tlist_copy(p->delete_rules);
+			
+			// Allocate auxiliary clause lists.
+			
+			Glob.limbo    = clist_init("limbo");
+			Glob.disabled = clist_init("disabled");
+			Glob.empties  = NULL;
+			
+			if (flag(Opt->print_initial_clauses)) {
+				printf("\n%% Clauses before input processing:\n");
+				fwrite_clause_clist(stdout, Glob.usable,  CL_FORM_STD);
+				fwrite_clause_clist(stdout, Glob.sos,     CL_FORM_STD);
+				fwrite_clause_clist(stdout, Glob.demods,  CL_FORM_STD);
+				if (Glob.hints->length > 0)
+					printf("\n%% %d hints input.\n", Glob.hints->length);
+			}
+			
+			// Predicate elimination (may add to sos and move clauses to disabled)
+			
+			if (flag(p->options->predicate_elim) && clist_empty(Glob.usable)) {
+				print_separator(stdout, "PREDICATE ELIMINATION", TRUE);
+				predicate_elimination(Glob.sos, Glob.disabled,!flag(Opt->quiet));
+				print_separator(stdout, "end predicate elimination", TRUE);
+			}
+			
+			basic_clause_properties(Glob.sos, Glob.usable);
+			
+			// Possible special treatment for denials (negative in Horn sets)
+			
+			if (flag(Opt->auto_denials))
+				auto_denials(Glob.sos, Glob.usable, Opt);
+			
+			init_search();  // init clocks, ordering, auto-mode, init packages
+			
+			index_and_process_initial_clauses();
+			
+			print_separator(stdout, "SEARCH", TRUE);
+			
+			printf("\n%% Starting search at %.3f seconds.\n", user_seconds());
+			fflush(stdout);
+			Glob.start_time = user_seconds();
+			Glob.searching = TRUE;
+			
+			// ****************************** Main Loop ******************************
+			
+			Glob.incr=0;
+			Glob.max_rank=-1;
+			BOOL Cycle = TRUE;
+			Glob.loop=FALSE;
+			init_tab_rank(Glob.tab_rank);
+			while (inferences_to_make() && Cycle) {
+				
+				// make_inferences: each inferred clause is cl_processed, which
+				// does forward demodulation and subsumption; if the clause is kept
+				// it is put on the Limbo list, and it is indexed so that it can be
+				// used immediately with subsequent newly inferred clauses.
+				
+				
+				/*...................Modif...............*/
+				
+				make_inferences();
+				if (flag(Opt->superind)) {
+					Glob.max_rank = compute_rank_max(Glob.tab_rank);
+					printf(" max_rank =  %d  \n", Glob.max_rank);
+					if(Glob.loop){
+						if (get_rank(Glob.loop_clause) <= Glob.max_rank) {
+							Cycle = FALSE;
+							p_clause(Glob.loop_clause);
+							printf("that s a cycle \n");
+							printf(" max_rank =  %d  \n", Glob.max_rank);
+						}
+					}
+				}
+				// -proo_process: this applies back subsumption, back demodulation,
+				// and other operations that can disable clauses.  Limbo clauses
+				// are moved to the Sos list.
+				
+				limbo_process(FALSE);
+				if (flag(Opt->superind)) {
+					if(Glob.ind_empty_clause && Glob.max_rank >= 1 ){
+						printf("Induction rule applied to the first parameter clause \n");
+						handle_proof_and_maybe_exit2();
+					}
+					if(Glob.max_rank > parm(Opt->start_rank) && !Glob.ind_empty_clause){ // if level empty clauses of rank >= 2 are generated and no empty clause of the forme (N(s^(i)(X)) is generated
+						BOOL B = TRUE;
+						printf(" max_rank =  %d ", Glob.max_rank );
+						int i;
+						int j;
+						//int i = rand_i_j(1,Glob.max_rank);
+						//printf(" i = %d ", i);
+						//Cycle=FALSE;
+						//Plist limb = copy_clist_to_plist_shallow(Glob.limbo);
+						//p_plist(limb);
+						//Plist dis = copy_clist_to_plist_shallow(Glob.disabled);
+						//p_plist(dis);
+						//int j =rand_i_j(2,Glob.max_rank+1);
+						//printf(" i == %d  j== %d  \n", i ,j);
+						//B=fixed_point_without_empties(i, j, Glob.sos, Glob.usable);
+						if (flag(Opt->random_loopdet)) {
+							 i = rand_i_j(1,Glob.max_rank);
+							//printf(" i = %d ", i)
+							 j =rand_i_j(i+1,Glob.max_rank+1);
+							printf(" i == %d  j== %d  \n", i ,j);
+							B=fixed_point(i, j, Glob.sos, Glob.usable);
+							if (B) {
+								handle_proof_and_maybe_exit2();
+								printf(" It's a cycle \n" );
+								//handle_proof_and_maybe_exit2();
+								Cycle=FALSE;
+								break;
+							}
+						}
+						else{
+							for (i=0; i < Glob.max_rank; i++) {// Check every cycle between i and j
+								for (j=i+1; j<= Glob.max_rank ; j++) {
+									printf(" i == %d  j== %d  \n", i ,j);
+									B=fixed_point(i, j, Glob.sos, Glob.usable);
+									if (B) {
+										handle_proof_and_maybe_exit2();
+										printf(" It's a cycle \n" );
+										//handle_proof_and_maybe_exit2();
+										Cycle=FALSE;
+										break;
+									}
+								}
+								
+							}
+						}
+						
+					}
+				}
+				
+			}  // ************************ end of main loop ************************
+			if (flag(Opt->superind)) {
+				if (!Cycle) {
+					handle_proof_and_maybe_exit2();
+				}
+				else {
+					printf(" End Generation \n");
+					
+					
+				}
+			}
+			fprint_all_stats(stdout, Opt ? stringparm1(Opt->stats) : "lots");
+			print_separator(stdout, "end of search", TRUE);
+			fatal_setjmp();  /* This makes longjmps cause a fatal_error. */
+			Glob.return_code = SOS_EMPTY_EXIT;
+			return collect_prover_results(p->xproofs);
+		}
+	}  /* search */
+	
+	/*************
  *
  *   forking_search()
  *
@@ -2994,3 +3667,13 @@ Prover_results forking_search(Prover_input input)
     return results;
   }  /* end of parent code */
 }  /* forking_search */
+	
+	/********************* MODIF *****************************/
+	
+	// On suppose a<b
+	int rand_i_j(int i, int j){
+		if (i==j) {
+			return i;
+		}else
+			return (rand()%(j-i)) +i;
+	}

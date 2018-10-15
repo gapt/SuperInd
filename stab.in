@@ -1,0 +1,28 @@
+%\/i=1..n p_i /\i=1..n -p_i
+% From Regstab
+% Unsat
+%assign(max_weight, 500).
+set(breadth_first).
+set(prolog_style_variables).
+assign(max_given, 100).
+set(raw).
+%set(ordered_res).
+set(ur_resolution).
+set(binary_resolution).
+assign(order, kbo).
+%assign(literal_selection, none).
+clear(predicate_elim).
+
+list(kbo_weights).
+  s = 3.
+end_of_list.
+
+formulas(sos).
+ S1(0)  <->  -P(0) .
+S1(s(X))  <->  (S1(X)  |  P(X))  .
+ N(X)  |  S1(X)  .
+%-P(X).
+ S2(0)  <->  P(0)  .
+ S2(s(X))  <->  (S2(X)  &  -P(X)) .
+  N(X)  |  S2(X)   . 
+end_of_list.

@@ -1,0 +1,13 @@
+// Same as adder1.stab, except the syntax uses funtions
+// A+0=A
+//expected: unsat
+
+let Sum(i)     := S_i <-> (A_i (+) B_i (+) C_i) in
+let Carry(i)   := C_i+1 <-> (A_i /\ B_i \/ C_i /\ A_i \/ C_i /\ B_i) in
+let Adder      := /\i=1..n (Sum(i) /\ Carry(i)) /\ ~C_1 in
+let NullB      := /\i=1..n ~B_i in
+let Conclusion := \/i=1..n (A_i (+) S_i) in
+
+Adder() /\ NullB() /\ Conclusion()
+
+// vim:ft=regstab

@@ -52,19 +52,33 @@ void init_maximal(void)
 static
 BOOL greater_literals(Literals l1, Literals l2)
 {
-  Term a1 = l1->atom;
-  Term a2 = l2->atom;
-  Ordertype p = sym_precedence(SYMNUM(a1), SYMNUM(a2));
-  if (p == GREATER_THAN)
-    return TRUE;
-  else if (p == LESS_THAN)
-    return FALSE;
-  else if (SYMNUM(a1) != SYMNUM(a2))
-    return FALSE;
-  else if (is_eq_symbol(SYMNUM(a1)))
-    return greater_multiset_current_ordering(a1, a2);
-  else
-    return term_greater(a1, a2, FALSE);  /* LPO, RPO, KBO */
+	Term a1 = l1->atom;
+	Term a2 = l2->atom;
+	// ************* Modif ****************
+	if(succ_occurs_in(a1) && !succ_occurs_in(a2)){
+		//printf("t1 "); p_term(a1);printf("t1 ");
+		//printf("t2 "); p_term(a2); printf("t2 "); 
+		return TRUE;
+	}
+	else if(!succ_occurs_in(a1) && succ_occurs_in(a2)){
+		//printf("k1 "); p_term(a1);printf("k1 ");
+		//printf("k2 "); p_term(a2); printf("k2 ");
+		
+		return FALSE;
+	}
+	else{
+		Ordertype p = sym_precedence(SYMNUM(a1), SYMNUM(a2));
+		if (p == GREATER_THAN)
+			return TRUE;
+		else if (p == LESS_THAN)
+			return FALSE;
+		else if (SYMNUM(a1) != SYMNUM(a2))
+			return FALSE;
+		else if (is_eq_symbol(SYMNUM(a1)))
+			return greater_multiset_current_ordering(a1, a2);
+		else
+			return term_greater(a1, a2, FALSE);  /* LPO, RPO, KBO */
+	}
 }  /* greater_literals */
 
 /*************
@@ -82,16 +96,29 @@ This version does not use a flag.
 /* PUBLIC */
 BOOL max_lit_test(Literals lits, Literals lit)
 {
-  /* If there is a greater literal of ANY sign, return FALSE. */
-  Literals l2 = lits;
-  BOOL maximal = TRUE;
-  while (l2 && maximal) {
-    if (lit != l2 && greater_literals(l2, lit))
-      maximal = FALSE;
-    else
-      l2 = l2->next;
-  }
-  return maximal;
+	BOOL maximal = TRUE;
+	//Modif
+	if (param_term(lit->atom)) {
+		return FALSE;
+	}
+	else{
+		/* If there is a greater literal of ANY sign, return FALSE. */
+		Literals l2 = lits;
+		
+		while (l2 && maximal) {
+			//printf("l2 = "); p_term (l2->atom);
+			//printf("lit = "); p_term (l2->atom);
+			//printf("param_term = %d ",param_term(l2->atom));
+			//printf("greater (l2,lit) = %d ", greater_literals(l2, lit));
+			//printf("(lit!=l2) = %d ",lit != l2);
+			if (lit != l2 && !param_term(l2->atom) && greater_literals(l2, lit)) //Modif
+				maximal = FALSE;
+			else
+				l2 = l2->next;
+		}
+	}
+	//printf(" l ");p_term(lit->atom);printf("max = %d", maximal);printf(" l \n");
+	return maximal;
 }  /* max_lit_test */
 
 /*************
@@ -109,16 +136,22 @@ This version does not use a flag.
 /* PUBLIC */
 BOOL max_signed_lit_test(Literals lits, Literals lit)
 {
-  /* If there is a greater literal of the same sign, return FALSE. */
-  Literals l2 = lits;
-  BOOL maximal = TRUE;
-  while (l2 && maximal) {
-    if (lit != l2 && lit->sign == l2->sign && greater_literals(l2, lit))
-      maximal = FALSE;
-    else
-      l2 = l2->next;
-  }
-  return maximal;
+	BOOL maximal = TRUE;
+	//Modif
+	if (param_term(lit->atom)) {
+		return FALSE;
+	}
+	else{
+		/* If there is a greater literal of the same sign, return FALSE. */
+		Literals l2 = lits;
+		while (l2 && maximal) {
+			if (lit != l2 &&  lit->sign == l2->sign && !param_term(l2->atom) && greater_literals(l2, lit))
+				maximal = FALSE;
+			else
+				l2 = l2->next;
+		}
+	}
+	return maximal;
 }  /* max_signed_lit_test */
 
 /*************
@@ -141,10 +174,14 @@ void mark_maximal_literals(Literals lits)
   /* Note: we mark the atom, not the literal. */
 
   for (lit = lits; lit; lit = lit->next) {
-    if (max_lit_test(lits, lit))
+	  if (max_lit_test(lits, lit)){
+		  //printf("max lit = "); p_term(lit->atom);
       term_flag_set(lit->atom, Maximal_flag);
-    if (max_signed_lit_test(lits, lit))
-      term_flag_set(lit->atom, Maximal_signed_flag);
+	  }
+	  //if (max_signed_lit_test(lits, lit)){
+		//   printf("lit signed = "); p_term(lit->atom);
+     // term_flag_set(lit->atom, Maximal_signed_flag);
+	  //}
   }
 }  /* mark_maximal_literals */
 
@@ -163,10 +200,16 @@ or FULL_CHECK (do the full comparicon).
 /* PUBLIC */
 BOOL maximal_literal(Literals lits, Literals lit, int check)
 {
-  if (check == FLAG_CHECK)
+	
+
+	if (check == FLAG_CHECK){
+	//printf(" max lit flag "); p_term(lit->atom);
     return term_flag(lit->atom, Maximal_flag);
-  else
+	}
+	else{
+		//printf(" max lit "); p_term(lit->atom);
     return max_lit_test(lits, lit);
+	}
 }  /* maximal_literal */
 
 /*************

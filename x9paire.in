@@ -1,0 +1,22 @@
+% UNSAT NOT YET
+assign(max_weight, 15).
+%set(raw).
+%set(print_gen).
+set(binary_resolution).
+clear(neg_binary_resolution).
+assign(literal_selection, none).
+clear(predicate_elim).
+
+formulas(sos).
+p(s(zk),i(y),s(s(x))) | -p(zk,i(y),x).
+all wj( p(s(zk),wj , s(s(x))) | -p(zk,wj,x) | wj = i(y)).
+p(0,a,b).
+even(b).
+N(y) | -p(y,a,x) | -even(x).
+even(s(s(x))) | -even(x).
+-even( s(s(x)) )| even(x).
+even(0).
+-even(s(0)).
+end_of_list.
+
+

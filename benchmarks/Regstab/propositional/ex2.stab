@@ -1,0 +1,5 @@
+//expected: sat
+
+P_1 /\ (Q_1 \/ ~P_1)
+
+// vim:ft=regstab

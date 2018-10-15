@@ -1,0 +1,29 @@
+%From Regstab :  bitvectors/ripplecarry/Adder4.stab
+% Associativity
+assign(max_weight, 1550).
+set(prolog_style_variables). 
+assign(max_given, 4500).
+%set(raw).
+set(ordered_res).
+predicate_order([N, A1,A2, A3,B1, B2, C1, C2, C1P, C2P, S1, S2, S3, S4, S, SP, S5]).
+set(binary_resolution).
+assign(order, kbo).
+assign(literal_selection, none).
+clear(predicate_elim).
+list(kbo_weights).
+s = 3.
+end_of_list.
+formulas(sos).
+( ( N(X) | S1(X) ) & -C1(0)  ) & ( ( N(X) | S2(X) ) & -C1P(0)  ) & ( ( N(X) | S3(X) ) & -C2P(0)  ) & ( ( N(X) | S4(X) ) & -C2(0)  ) &  ( N(X) | S5(X) ) . 
+S1(0) <-> ( ( B1(0) <-> -( - (A1(0) <-> A2(0) ) <-> C1(0))  ) & ( C1(s(0)) <-> (A1(0) & A2(0) | C1(0) & A1(0) | C1(0) & A2(0))  ) )  .
+S1(s(X)) <-> ( S1(X) & ( ( B1(X) <-> -( - (A1(X) <-> A2(X) ) <-> C1(X))  ) & ( C1(s(X)) <-> (A1(X) & A2(X) | C1(X) & A1(X) | C1(X) & A2(X))  ) ) )  .
+S2(0) <-> ( ( S(0) <-> -( - (B1(0) <-> A3(0) ) <-> C1P(0))  ) & ( C1P(s(0)) <-> (B1(0) & A3(0) | C1P(0) & B1(0) | C1P(0) & A3(0))  ) )  .
+S2(s(X)) <-> ( S2(X) & ( ( S(X) <-> -( - (B1(X) <-> A3(X) ) <-> C1P(X))  ) & ( C1P(s(X)) <-> (B1(X) & A3(X) | C1P(X) & B1(X) | C1P(X) & A3(X))  ) ) )  .
+S3(0) <-> ( ( SP(0) <-> -( - (A1(0) <-> B2(0) ) <-> C2P(0))  ) & ( C2P(s(0)) <-> (A1(0) & B2(0) | C2P(0) & A1(0) | C2P(0) & B2(0))  ) )  .
+S3(s(X)) <-> ( S3(X) & ( ( SP(X) <-> -( - (A1(X) <-> B2(X) ) <-> C2P(X))  ) & ( C2P(s(X)) <-> (A1(X) & B2(X) | C2P(X) & A1(X) | C2P(X) & B2(X))  ) ) )  .
+S4(0) <-> ( ( B2(0) <-> -( - (A2(0) <-> A3(0) ) <-> C2(0))  ) & ( C2(s(0)) <-> (A2(0) & A3(0) | C2(0) & A2(0) | C2(0) & A3(0))  ) )  .
+S4(s(X)) <-> ( S4(X) & ( ( B2(X) <-> -( - (A2(X) <-> A3(X) ) <-> C2(X))  ) & ( C2(s(X)) <-> (A2(X) & A3(X) | C2(X) & A2(X) | C2(X) & A3(X))  ) ) )  .
+S5(0) <-> - (S(0) <-> SP(0))     .
+S5(s(X)) <-> ( S5(X) | - (S(X) <-> SP(X)) )  .
+
+end_of_list.

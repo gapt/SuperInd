@@ -1,0 +1,67 @@
+%	============================== PROOF =================================
+%	
+%	% Proof 1 at 0.01 (+ 0.00) seconds.
+%	% Given clauses 137.
+%	
+%	% number of calls to fixpoint : 4 
+%	 S_init  : 
+%	 (62:  [ S1(v0) if  n = s(v0) ].
+%	70:  [ Cl1Phi(v0) if  n = s(v0) ].
+%	85:  [ Cl2chi(v0) | Cl0chi(v0) if  n = s(v0) ].
+%	) 
+%	 S_loop  : 
+%	 (113:  [ Cl2chi(v0) | Cl0chi(v0) if  n = s(s(v0)) ].
+%	99:  [ Cl1Phi(v0) if  n = s(s(v0)) ].
+%	89:  [ S1(v0) if  n = s(s(v0)) ].
+%	) 
+%	 The empty clauses  : 
+%	 (67:  [  n = 0 ].
+%	112:  [  n = s(0) ].
+%	140:  [  n = s(s(0)) ].
+%	) max_rank 3 
+%	
+%	============================== end of proof ==========================
+%	
+%	============================== STATISTICS ============================
+%	
+%	Given=137. Generated=325. Kept=164. proofs=1.
+%	Usable=90. Sos=7. Demods=0. Limbo=0, Disabled=104. Hints=0.
+%	Kept_by_rule=0, Deleted_by_rule=0.
+%	Forward_subsumed=80. Back_subsumed=67.
+%	Sos_limit_deleted=0. Sos_displaced=0. Sos_removed=0.
+%	New_demodulators=0 (0 lex), Back_demodulated=0. Back_unit_deleted=0.
+%	Demod_attempts=0. Demod_rewrites=0.
+%	Res_instance_prunes=0. Para_instance_prunes=0. Basic_paramod_prunes=0.
+%	Nonunit_fsub_feature_tests=346. Nonunit_bsub_feature_tests=312.
+%	Megabytes=0.26.
+%	User_CPU=0.01, System_CPU=0.00, Wall_clock=0.
+%	
+%	============================== end of statistics =====================
+%	
+
+set(prolog_style_variables). 
+assign(max_given, 2300).
+set(raw).
+set(index_flat).
+%set(print_gen).
+set(superind).
+set(cycle2).
+set(rank_given).
+set(binary_resolution).
+set(ordered_res).
+set(back_subsume).
+assign(order, kbo).
+%assign(literal_selection, all_negative).
+clear(predicate_elim).
+list(kbo_weights).
+s = 3.
+end_of_list.
+
+formulas(sos).
+( N(X) | Cl0phi(X) ) &  (-Cl0phi(0) | Cl1Phi(0)) & (-Cl0phi(0) | Cl0chi(s(0)) | A(s(0)) ) & (-Cl0phi(0) | -A(0) ) & (-Cl1Phi(0) | A(0) ) & -Cl0chi(0) & (-Cl2chi(0) | -A(0)  ) & ( N(X) | S1(s(X)) )  .  
+S1(0) <-> $T  .
+S1(s(X)) <-> ( S1(X) & ( (-Cl0phi(s(X)) | Cl1Phi(s(X))) & (-Cl0phi(s(X)) | Cl0chi(s(X)) | $A$(s(X))) & (-Cl0phi(s(X)) | $Cl2chi$(s(X))) & (-Cl1Phi(s(X)) | Cl1Phi(X)) & (-Cl1Phi(s(X)) | A(s(X))) & (-Cl2chi(s(X)) | -A(s(X)) | Cl2chi(X)) & (-Cl0chi(s(X)) | Cl0chi(X))  ) )  .
+A(s(X))  <->  $A$(X)  .
+Cl2chi(s(X))  <->  $Cl2chi$(X)  .
+
+end_of_list.

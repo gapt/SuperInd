@@ -154,7 +154,8 @@ void lindex_destroy(Lindex ldx)
 }  /* lindex_destroy */
 
 /*************
- *
+ *assign(literal_selection, none).
+
  *   lindex_update()
  *
  *************/
@@ -166,13 +167,17 @@ This routine indexes (or unindexes) all literals of a clause.
 /* PUBLIC */
 void lindex_update(Lindex ldx, Topform c, Indexop op)
 {
-  Literals lit;
-  for (lit = c->literals; lit != NULL; lit = lit->next) {
-    if (lit->sign)
-      mindex_update(ldx->pos, lit->atom, op);
-    else
-      mindex_update(ldx->neg, lit->atom, op);
-  }
+	Literals lit;
+	for (lit = c->literals; lit != NULL; lit = lit->next) {
+		if (!param_term(lit->atom)) {
+			
+			
+			if (lit->sign)
+				mindex_update(ldx->pos, lit->atom, op);
+			else
+				mindex_update(ldx->neg, lit->atom, op);
+		}
+	}
 }  /* lindex_update */
 
 /*************

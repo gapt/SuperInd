@@ -1,0 +1,42 @@
+%assign(max_weight, 15).
+set(prolog_style_variables). 
+assign(max_given, 1300).
+set(raw).
+%predicate_order([ Y, XpY, S5, X1, S6, S7, S8, S9, T1, T2, T3, T4, T5, $T1$, N, M1, M2, M4, S1, S2, S3, S4, $M2$$, $M3$, $M4$$, $M2$, $M4$, $M1$, $M2$$$, $M3$$, $M4$$%$, $X1$, $Y$, M3 ]).
+set(binary_resolution).
+%set(random_given).
+%set(print_gen).
+assign(order, kbo).
+assign(literal_selection, none).
+clear(predicate_elim).
+list(kbo_weights).
+s = 3.
+end_of_list.
+formulas(sos).
+
+( ( N(X) | -$X1$(X) ) & ( N(X) | -$Y$(X) )  ) & ( M1(s(0)) & ( N(X) | S1(s(X)) )  ) & ( M2(s(0)) & -$M2$(s(0)) & $M2$$(s(0)) & ( N(X) | S2(s(X)) )  ) & ( M3(s(0)) & $M3$(s(0)) & ( N(X) | S3(s(X)) )  ) & ( -M4(s(0)) & -$M4$(s(0)) & $M4$$(s(0)) & ( N(X) | S4(s(X)) )  ) & ( ( N(X) | S5(s(X)) ) & -T1(s(0))  ) & ( ( N(X) | T2(X) ) & T2(0) & ( N(X) | S6(s(X)) )  ) & ( ( N(X) | T3(X) ) & T3(0) & ( N(X) | S7(s(X)) )  ) & ( ( ( N(X) | T4(X) ) & T4(0) & ( N(X) | S8(X) )  )  ) & ( ( ( N(X) | T5(X) ) & T5(0) & ( N(X) | S9(s(X)) )  )  )  .  
+S1(0).
+
+S2(0) .
+S3(0) .
+
+S4(0) <-> $T  .
+S5(0) <-> $T  .
+S6(0) <-> $T  .
+S7(0) <-> $T  .
+S8(0) <-> $T  .
+S9(0) <-> $T  .
+M1(s(X))  <->  $M1$(X)  .
+M2(s(X))  <->  $M2$(X)  .
+$M2$(s(X))  <->  $M2$$(X)  .
+$M2$$(s(X))  <->  $M2$$$(X)  .
+M3(s(X))  <->  $M3$(X)  .
+$M3$(s(X))  <->  $M3$$(X)  .
+M4(s(X))  <->  $M4$(X)  .
+$M4$(s(X))  <->  $M4$$(X)  .
+$M4$$(s(X))  <->  $M4$$$(X)  .
+T1(s(X))  <->  $T1$(X)  .
+X1(s(X))  <->  $X1$(X)  .
+Y(s(X))  <->  $Y$(X)  .
+
+end_of_list.

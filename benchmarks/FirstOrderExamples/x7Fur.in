@@ -1,0 +1,69 @@
+% Unsat OK
+% ts > 0.
+%	============================== PROOF =================================
+%	
+%	% Proof 1 at 0.06 (+ 0.01) seconds.
+%	% Given clauses 68.
+%	
+%	% number of calls to fixpoint : 1 
+%	 S_init  : 
+%	 (1:  [ ->(f(v0),0) if  n = v0 ].
+%	) 
+%	 S_loop  : 
+%	 (20:  [ ->(f(v0),0) if  n = s(v0) ].
+%	) 
+%	 The empty clauses  : 
+%	 (18:  [  n = 0 ].
+%	25:  [  n = s(0) ].
+%	) max_rank 3 
+%	
+%	============================== end of proof ==========================
+%	
+%	============================== STATISTICS ============================
+%	
+%	Given=68. Generated=1176. Kept=1100. proofs=1.
+%	Usable=59. Sos=1029. Demods=3. Limbo=0, Disabled=21. Hints=0.
+%	Kept_by_rule=0, Deleted_by_rule=0.
+%	Forward_subsumed=75. Back_subsumed=11.
+%	Sos_limit_deleted=0. Sos_displaced=0. Sos_removed=0.
+%	New_demodulators=3 (0 lex), Back_demodulated=1. Back_unit_deleted=0.
+%	Demod_attempts=18643. Demod_rewrites=47.
+%	Res_instance_prunes=0. Para_instance_prunes=0. Basic_paramod_prunes=0.
+%	Nonunit_fsub_feature_tests=36. Nonunit_bsub_feature_tests=46.
+%	Megabytes=1.86.
+%	User_CPU=0.06, System_CPU=0.01, Wall_clock=0.
+%	
+%	============================== end of statistics =====================
+
+%assign(max_weight, 100).
+%set(raw).
+assign(max_given, 100).
+set(binary_resolution).
+set(paramodulation).
+%set(ordered_para).
+assign(order, kbo).
+%set(print_gen).
+set(ordered_res).
+set(superind).
+set(cycle1).
+assign(literal_selection, none).
+%clear(predicate_elim).
+
+list(kbo_weights).
+  s = 3.
+end_of_list.
+
+formulas(sos).
+N(x) |-( f(x) > 0).
+f(s(x)) = *(f(x),p(x)).
+-(x>0) | -(y>0) | x*y > 0. 
+f(0)=1.
+p(y) > 1.
+1 > 0.
+-(x > 1) | x > 0.
+-(x>0) | *(1,x) > 0.
+*(1,x)=x.
+
+end_of_list.
+
+

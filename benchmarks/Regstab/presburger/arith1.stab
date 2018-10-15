@@ -1,0 +1,31 @@
+// n+p >= n
+//
+// WARNING: we have to take care of possible overflowing carries!
+// -> thus we consider (n+1)-bit vectors
+// -> we must state explicitly that the last bit of n and p is null
+// (of course this is not the case for n+p)
+//expected: unsat
+
+let LowerOrEqual(Temp,X,Y,n)   := Temp_n /\ Temp_0 /\ /\i=1..n (Temp_i <-> ((X_i <-> Y_i) /\ Temp_i-1 \/ ~X_i /\ Y_i)) in
+let Equal(Temp,X,Y,n)          := /\i=1..n (X_i <-> Y_i) in
+let Different(Temp,X,Y,n)      := \/i=1..n (X_i (+) Y_i) in
+let LowerThan(Temp,X,Y,n)      := LowerOrEqual(Temp,X,Y,n) /\ Different(Temp,X,Y,n) in
+let GreaterOrEqual(Temp,X,Y,n) := LowerOrEqual(Temp,Y,X,n) in
+let GreaterThan(Temp,X,Y,n)    := LowerThan(Temp,Y,X,n) in
+
+let Sum(A,B,S,C,i)   := S_i <-> (A_i (+) B_i (+) C_i) in
+let Carry(A,B,C,i)   := C_i+1 <-> (A_i /\ B_i \/ C_i /\ A_i \/ C_i /\ B_i) in
+let Adder(A,B,S,C,n) := ~A_n+1 /\ ~B_n+1 /\ (S_n+1 <-> C_n+1) /\ /\i=1..n (Sum(A,B,S,C,i) /\ Carry(A,B,C,i)) /\ ~C_1 in
+
+let Zero(A)  := /\i=1..n ~A_i in
+let One(A)   :=  A_1 /\ /\i=1..n ~A_i+1 in
+let Two(A)   := ~A_1 /\  A_2 /\ /\i=1..n ~A_i+2 in
+let Three(A) :=  A_1 /\  A_2 /\ /\i=1..n ~A_i+2 in
+let Four(A)  := ~A_1 /\ ~A_2 /\ A_3 /\ /\i=1..n ~A_i+3 in
+let Five(A)  :=  A_1 /\ ~A_2 /\ A_3 /\ /\i=1..n ~A_i+3 in
+
+let LastBitNull := ~N_n+1 /\ ~P_n+1 in
+
+LastBitNull() /\ Adder(N,P,NplusP,T1,n+1) /\ LowerThan(T2,NplusP,N,n+1) | n>=0
+
+// vim:ft=regstab

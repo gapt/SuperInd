@@ -342,8 +342,10 @@ a fatal error occurs.
 Avl_node avl_delete(Avl_node p, void *item,
 		    Ordertype (*compare) (void *, void *))
 {
-  if (p == NULL)
+	if (p == NULL){
+		p_clause(item);
     fatal_error("avl_delete, item not found");
+	}
   else {
     Ordertype relation = (*compare)(item, p->item);
 

@@ -1,0 +1,80 @@
+%Transitivity: n1 <= n2 /\ n2 <= n3 => n1 <= n3
+%	============================== PROOF =================================
+%	
+%	% Proof 1 at 0.02 (+ 0.00) seconds.
+%	% Given clauses 214.
+%	
+%	% number of calls to fixpoint : 1 
+%	 S_init  : 
+%	 (10:  [ L1(v0) if  n = v0 ].
+%	12:  [ S1(v0) if  n = v0 ].
+%	13:  [ L2(v0) if  n = v0 ].
+%	15:  [ S2(v0) if  n = v0 ].
+%	16:  [ L3(v0) if  n = v0 ].
+%	18:  [ S3(v0) if  n = v0 ].
+%	19:  [ S4(v0) if  n = v0 ].
+%	) 
+%	 S_loop  : 
+%	 (158:  [ S4(v0) if  n = s(v0) ].
+%	116:  [ S3(v0) if  n = s(v0) ].
+%	157:  [ L3(v0) if  n = s(v0) ].
+%	72:  [ S2(v0) if  n = s(v0) ].
+%	154:  [ L2(v0) if  n = s(v0) ].
+%	68:  [ S1(v0) if  n = s(v0) ].
+%	155:  [ L1(v0) if  n = s(v0) ].
+%	) 
+%	 The empty clauses  : 
+%	 (120:  [  n = 0 ].
+%	173:  [  n = s(0) ].
+%	) max_rank 3 
+%	
+%	============================== end of proof ==========================
+%	
+%	============================== STATISTICS ============================
+%	
+%	Given=214. Generated=877. Kept=258. proofs=1.
+%	Usable=120. Sos=15. Demods=0. Limbo=0, Disabled=181. Hints=0.
+%	Kept_by_rule=0, Deleted_by_rule=0.
+%	Forward_subsumed=553. Back_subsumed=123.
+%	Sos_limit_deleted=0. Sos_displaced=0. Sos_removed=0.
+%	New_demodulators=0 (0 lex), Back_demodulated=0. Back_unit_deleted=0.
+%	Demod_attempts=0. Demod_rewrites=0.
+%	Res_instance_prunes=0. Para_instance_prunes=0. Basic_paramod_prunes=0.
+%	Nonunit_fsub_feature_tests=734. Nonunit_bsub_feature_tests=389.
+%	Megabytes=0.38.
+%	User_CPU=0.02, System_CPU=0.00, Wall_clock=0.
+%	
+%	============================== end of statistics =====================
+
+assign(max_weight, 15).
+set(prolog_style_variables). 
+assign(max_given, 350).
+set(raw).
+set(index_flat).
+%set(print_gen).
+set(superind).
+%set(cycle2).
+set(random_loopdet).
+set(rank_given).
+set(binary_resolution).
+set(ordered_res).
+set(back_subsume).
+assign(order, kbo).
+assign(literal_selection, none).
+clear(predicate_elim).
+%list(kbo_weights). 
+%s = 3.
+%end_of_list.
+
+formulas(sos).
+( ( N(X) | L1(X) ) & L1(0) & ( N(X) | S1(X) )  ) & ( ( N(X) | L2(X) ) & L2(0) & ( N(X) | S2(X) )  ) & ( ( ( ( N(X) | L3(X) ) & L3(0) & ( N(X) | S3(X) )  ) & ( ( N(X) | S4(X) )  )  )  )  .  
+S1(0) <-> $T  .
+S1(s(X)) <-> ( S1(X) & (L1(s(X)) <-> ( ((A(s(X)) <-> B(s(X)) ) & L1(X)) | -A(s(X)) & B(s(X)) )   ))  .
+S2(0) <-> $T  .
+S2(s(X)) <-> ( S2(X) & (L2(s(X)) <-> ( ((B(s(X)) <-> C(s(X)) ) & L2(X)) | -B(s(X)) & C(s(X)) )     ))  .
+S3(0) <-> $T  .
+S3(s(X)) <-> ( S3(X) & (L3(s(X)) <-> ( ((A(s(X)) <-> C(s(X)) ) & L3(X)) | A(s(X)) & -C(s(X)) )     ))  .
+S4(0) <-> $F  .
+S4(s(X)) <-> ( S4(X) | - (A(s(X)) <-> C(s(X))) )  .
+
+end_of_list.

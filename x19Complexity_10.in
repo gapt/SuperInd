@@ -1,0 +1,28 @@
+% Unsat OK
+assign(max_weight, 100).
+%assign(max_seconds, 1).
+set(raw).
+set(back_subsume). 
+set(back_demod).
+set(cac_redundancy).
+%clear(auto_inference).
+set(prolog_style_variables).
+%set(print_gen).
+set(binary_resolution).
+set(paramodulation).
+%clear(ordered_res).
+assign(max_given, 40).
+assign(literal_selection, none).
+%predicate_order([N,>]).
+clear(predicate_elim).
+list(kbo_weights).
+ s = 5.
+end_of_list.
+formulas(sos).
+N(X) | (-e(a,T1,T2,T3,T4,T5,T6,T7,T8,T9) & e(T1, a, T2,T3,T4,T5,T6,T7,T8,T9)  & t(X) != f(T1,T2,a,T3,T4,T5,T6,T7,T8,T9)  & t(X) != f(T1,T2,T3, a,T4,T5,T6,T7,T8,T9)  & t(X) != f(T1,T2,T3,T4,a,T5,T6,T7,T8,T9)  & t(X) != f(T1,T2,T3,T4,T5,a,T6,T7,T8,T9)  & t(X) != f(T1,T2,T3,T4,T5,T6,a,T7,T8,T9)  & t(X) != f(T1,T2,T3,T4,T5,T6,T7,a,T8,T9)  & t(X) != f(T1,T2,T3,T4,T5,T6,T7,T8,a,T9)  & t(X) != f(T1,T2,T3,T4,T5,T6,T7,T8,T9,a)).
+
+t(X)!=f(Z,T1,T2,T3,T4,T5,T6,T7,T8,T9) | g(t(X)) = f(T1,Z,T2,T3,T4,T5,T6,T7,T8,T9).
+t(s(X)) = g(t(X)). 
+t(0) = f(a,T1,T2,T3,T4,T5,T6,T7,T8,T9).
+end_of_list.
+

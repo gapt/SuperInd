@@ -1,0 +1,17 @@
+// Transitivity: 1 <= 2
+//expected: unsat
+
+let LowerOrEqual(Temp,X,Y,n)   := Temp_n /\ Temp_0 /\ /\i=1..n (Temp_i <-> ((X_i <-> Y_i) /\ Temp_i-1 \/ ~X_i /\ Y_i)) in
+let Equal(Temp,X,Y,n)          := /\i=1..n (X_i <-> Y_i) in
+let Different(Temp,X,Y,n)      := \/i=1..n (X_i (+) Y_i) in
+let LowerThan(Temp,X,Y,n)      := LowerOrEqual(Temp,X,Y,n) /\ Different(Temp,X,Y,n) in
+let GreaterOrEqual(Temp,X,Y,n) := LowerOrEqual(Temp,Y,X,n) in
+let GreaterThan(Temp,X,Y,n)    := LowerThan(Temp,Y,X,n) in
+
+let One(A)   :=  A_1 /\ /\i=1..n ~A_i+1 in
+let Two(A)   := ~A_1 /\  A_2 /\ /\i=1..n ~A_i+2 in
+
+Two(A) /\ One(B) /\ LowerThan(T,A,B,n) | n>=2
+
+// vim:ft=regstab
+

@@ -1,0 +1,31 @@
+set(prolog_style_variables). 
+assign(max_given, 2300).
+%set(raw).
+set(index_flat).
+set(print_gen).
+set(superind).
+clear(sat).
+%set(cycle2).
+set(rank_given).
+assign(start_rank, 1).
+set(binary_resolution).
+set(ordered_res).
+set(paramodulation).
+set(back_subsume).
+assign(order, kbo).
+clear(predicate_elim).
+list(kbo_weights).
+s = 3.
+end_of_list.
+
+formulas(sos).
+t(0) = tz.
+ store(t(U),b(U),c(U)) = t(s(U)) .
+-(b(U) = a).
+select(store(T, X , V) , X) = V.
+x = y | select(store(T, X , V) , Y) = select(T,Y).
+select(tz, a)=d.
+N(U) | select(t(U), a) != d.
+
+
+end_of_list.

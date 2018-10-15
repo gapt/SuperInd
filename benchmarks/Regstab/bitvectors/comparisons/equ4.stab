@@ -1,0 +1,11 @@
+// Transitivity: n1 <= n2 /\ n2 <= n3 => n1 <= n3
+//expected: unsat
+
+let LowerOrEqual(Temp,X,Y,n)   := Temp_n /\ Temp_0 /\ /\i=1..n (Temp_i <-> ((X_i <-> Y_i) /\ Temp_i-1 \/ ~X_i /\ Y_i)) in
+let Different(Temp,X,Y,n)      := \/i=1..n (X_i (+) Y_i) in
+let LowerThan(Temp,X,Y,n)      := LowerOrEqual(Temp,X,Y,n) /\ Different(Temp,X,Y,n) in
+let GreaterThan(Temp,X,Y,n)    := LowerThan(Temp,Y,X,n) in
+
+LowerOrEqual(L1,A,B,n) /\ LowerOrEqual(L2,B,C,n) /\ GreaterThan(L3,A,C,n)
+
+// vim:ft=regstab

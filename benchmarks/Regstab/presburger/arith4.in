@@ -1,0 +1,73 @@
+set(prolog_style_variables). 
+assign(max_given, 2000).
+set(raw).
+set(index_flat).
+%set(print_gen).
+assign(max_literals, 7).
+set(superind).
+%set(cycle2).
+clear(sat).
+set(rank_given).
+set(binary_resolution).
+set(ordered_res).
+set(back_subsume).
+assign(order, kbo).
+assign(literal_selection, none).
+clear(predicate_elim).
+list(kbo_weights).
+s = 3.
+end_of_list.
+formulas(sos).
+( ( N(X) | -$M1$(X) ) & ( N(X) | -$M2$(X) ) & ( N(X) | -$M3$(X) ) & ( N(X) | -$P1$(X) ) & ( N(X) | -$P2$(X) ) & ( N(X) | -$P3$(X) )  ) & ( ( N(X) | $T1$(X) ) & T1(0) & ( N(X) | $S1$(X) )  ) & ( ( N(X) | $T2$(X) ) & T2(0) & ( N(X) | $S2$(X) )  ) & ( ( N(X) | $T3$(X) ) & T3(0) & ( N(X) | $S3$(X) )  ) & ( ( N(X) | $T4$(X) ) & T4(0) & ( N(X) | $S4$(X) )  ) & ( ( N(X) | $S5$(X) ) & -T5(s(0))  ) & ( ( N(X) | $S6$(X) ) & -T6(s(0))  ) & ( ( N(X) | $S7$(X) ) & -T7(s(0))  ) & (N(X) | (  $T8$(X)  & T8(0) &   $S8$(X)    &  $S9$(X)      ) | (     $T9$(X)  & T9(0) &  $S11$(X) &   $S12$(X)      ) )  .  
+S1(0) <-> $T  .
+S1(s(X)) <-> ( S1(X) & (T1(s(X)) <-> ((M1(s(X)) <-> M2(s(X))) & T1(X) | -M1(s(X)) & M2(s(X)))) )  .
+S2(0) <-> $T  .
+S2(s(X)) <-> ( S2(X) & (T2(s(X)) <-> ((M2(s(X)) <-> M3(s(X))) & T2(X) | -M2(s(X)) & M3(s(X)))) )  .
+S3(0) <-> $T  .
+S3(s(X)) <-> ( S3(X) & (T3(s(X)) <-> ((P1(s(X)) <-> P2(s(X))) & T3(X) | -P1(s(X)) & P2(s(X)))) )  .
+S4(0) <-> $T  .
+S4(s(X)) <-> ( S4(X) & (T4(s(X)) <-> ((P2(s(X)) <-> P3(s(X))) & T4(X) | -P2(s(X)) & P3(s(X)))) )  .
+S5(0) <-> $T  .
+S5(s(X)) <-> ( S5(X) & ( ( M1plusP1(s(X)) <-> -( - (M1(s(X)) <-> P1(s(X)) ) <-> T5(s(X)))  ) & ( $T5$(s(X)) <-> (M1(s(X)) & P1(s(X)) | T5(s(X)) & M1(s(X)) | T5(s(X)) & P1(s(X)))  ) ) )  .
+S6(0) <-> $T  .
+S6(s(X)) <-> ( S6(X) & ( ( M2plusP2(s(X)) <-> -( - (M2(s(X)) <-> P2(s(X)) ) <-> T6(s(X)))  ) & ( $T6$(s(X)) <-> (M2(s(X)) & P2(s(X)) | T6(s(X)) & M2(s(X)) | T6(s(X)) & P2(s(X)))  ) ) )  .
+S7(0) <-> $T  .
+S7(s(X)) <-> ( S7(X) & ( ( M3plusP3(s(X)) <-> -( - (M3(s(X)) <-> P3(s(X)) ) <-> T7(s(X)))  ) & ( $T7$(s(X)) <-> (M3(s(X)) & P3(s(X)) | T7(s(X)) & M3(s(X)) | T7(s(X)) & P3(s(X)))  ) ) )  .
+S8(0) <-> $T  .
+S8(s(X)) <-> ( S8(X) & (T8(s(X)) <-> ((M1plusP1(s(X)) <-> M2plusP2(s(X))) & T8(X) | -M1plusP1(s(X)) & M2plusP2(s(X)))) )  .
+S9(0) <-> $F  .
+S9(s(X)) <-> ( S9(X) | - (M1plusP1(s(X)) <-> M2plusP2(s(X))) )  .
+S11(0) <-> $T  .
+S11(s(X)) <-> ( S11(X) & (T9(s(X)) <-> ((M2plusP2(s(X)) <-> M3plusP3(s(X))) & T9(X) | -M2plusP2(s(X)) & M3plusP3(s(X)))) )  .
+S12(0) <-> $F  .
+S12(s(X)) <-> ( S12(X) | - (M2plusP2(s(X)) <-> M3plusP3(s(X))) )  .
+T5(s(X))  <->  $T5$(X)  .
+T6(s(X))  <->  $T6$(X)  .
+T7(s(X))  <->  $T7$(X)  .
+M1(s(X))  <->  $M1$(X)  .
+M2(s(X))  <->  $M2$(X)  .
+M3(s(X))  <->  $M3$(X)  .
+P1(s(X))  <->  $P1$(X)  .
+P2(s(X))  <->  $P2$(X)  .
+P3(s(X))  <->  $P3$(X)  .
+
+T1(s(X))  <->  $T1$(X)  .
+T2(s(X))  <->  $T2$(X)  .
+T3(s(X))  <->  $T2$(X)  .
+T4(s(X))  <->  $T2$(X)  .
+S1(s(X))  <->  $S1$(X)  .
+S2(s(X))  <->  $S2$(X)  .
+S3(s(X))  <->  $S3$(X)  .
+S4(s(X))  <->  $S4$(X)  .
+S5(s(X))  <->  $S5$(X)  .
+
+S6(s(X))  <->  $S6$(X)  .
+S7(s(X))  <->  $S7$(X)  .
+S8(s(X))  <->  $S8$(X)  .
+S9(s(X))  <->  $S9$(X)  .
+
+
+S11(s(X))  <->  $S11$(X)  .
+S12(s(X))  <->  $S12$(X)  .
+
+end_of_list.

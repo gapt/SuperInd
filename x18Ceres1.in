@@ -1,0 +1,38 @@
+assign(max_weight, 14).
+set(prolog_style_variables).
+assign(max_given, 1200).
+
+%set(raw).
+%set(lightest_first).
+%set(print_gen).
+%set(back_subsume). 
+%set(back_demod).
+%set(cac_redundancy).
+assign(max_depth, 4).
+
+%set(ordered_para). 
+%set(paramodulation).
+%set(binary_resolution).
+
+assign(literal_selection, none).
+clear(predicate_elim).
+assign(order, kbo).
+%predicate_order([N,p,g,r,q, =]).
+list(kbo_weights).
+ s = 10.
+end_of_list.
+
+formulas(sos).
+(r(0) & p(Z)) -> p(f(g(0,Z))).
+-q(0).
+-r(s(X)) | r(X).
+(r(s(X)) & p(g(X,Z )) ) -> p(f(g(X,Z))).
+-q(s(X)) | r(s(X)).
+p(a).
+-(q(s(X)) & p(f(g(X, a))) ).
+g(0,Z) = Z.
+g(s(X), Z) = f(g(X,Z)).
+N(X) | q(X).
+end_of_list.
+
+

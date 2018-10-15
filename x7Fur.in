@@ -1,0 +1,33 @@
+% Unsat OK
+% ts > 0.
+assign(max_given, 100).
+%set(raw).
+set(binary_resolution).
+%set(paramodulation).
+assign(order, kbo).
+clear(back_subsume).
+%clear(neg_binary_resolution).
+assign(literal_selection, none).
+%assign(literal_selection, max_negative).
+%op(700, infix,"!=" ).
+%op(700, infix,"<" ).
+%predicate_order([N,=,>]).
+clear(predicate_elim).
+
+list(kbo_weights).
+  s = 3.
+end_of_list.
+
+formulas(sos).
+N(x) |-( f(x) > 0).
+f(s(x)) = *(f(x),p(x)). 
+f(0)=1.
+p(y) > 1.
+1 > 0.
+-(x > 1) | x > 0.
+-(x>0) | *(1,x) > 0.
+*(1,x)=x.
+-(x>0) | -(y>0) | x*y > 0.
+end_of_list.
+
+

@@ -1,0 +1,40 @@
+% Unsat OK
+assign(max_weight, 100).
+%assign(max_seconds, 1).
+set(raw).
+set(back_subsume). 
+set(back_demod).
+set(cac_redundancy).
+%clear(auto_inference).
+set(prolog_style_variables).
+%set(print_gen).
+set(binary_resolution).
+set(paramodulation).
+%clear(ordered_res).
+assign(max_given, 40).
+assign(literal_selection, none).
+%predicate_order([N,>]).
+clear(predicate_elim).
+list(kbo_weights).
+ s = 5.
+end_of_list.
+formulas(sos).
+%Je pense qu'on peut facilement trouver des exemples intressants suivant %ce principe, avec pas mal de variations possibles et pouvant tre %compliques autant qu'on veut. Un exemple trs simple:
+%p_i(x,y): code le fait que la ressource x est associe au client y ˆ %l'instant i
+%q(x,y): le fait que le client demande la ressource x
+%r_i(x,y): code le fait que la ressource x a djˆ t associe au client y %(avant l'instant i)
+
+%On peut considrer un nbre arbitraire (mais fix, sf ˆ considrer des %schmas avec deux paramtres...) de clients et de ressources.
+
+%On peut ensuite dfinir une politique d'attribution comme un ensemble de %clauses du premier ordre et utiliser le calcul pour vrifier ses %proprits. Par exemple, on peut supposer que les clients sont totalement %ordonns et que toute ressource r est affecte en priorit au client %maximal qui la demande. Puis on vrifie que tout client finit par obtenir %la ressource qu'il souhaite.
+a > b.
+b > c.
+a > c.
+-r(I,R,T) | -q(X,R).
+( (X > Z) &  q(X,R) & q(Z,R) &  -r(I,R,T) ) -> p(I,X,R).
+(p(I,X,R) & -q(Z,R) ) -> p(s(I),X,R)). 
+(p(I,X,R) & (q(Z,R) & X > Z )) -> p(s(I),X,R)). 
+N(X) | -p(X,Z,R).
+
+end_of_list.
+

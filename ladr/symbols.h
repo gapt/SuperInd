@@ -311,5 +311,11 @@ void process_skolem_list(Plist skolem_strings, Ilist fsyms);
 void process_lex_list(Plist lex_strings, Ilist syms, Symbol_type type);
 
 Ilist symnums_of_arity(Ilist p, int i);
+/****************************************/
+
+char *param_sym();
+BOOL is_param_symbol(int symnum);
+char *succ_sym();
+BOOL is_succ_symbol(int symnum);
 
 #endif  /* conditional compilation of whole file */

@@ -21,6 +21,7 @@
 
 #include "order.h"
 #include "string.h"
+//#include "topform.h"
 
 /* INTRODUCTION
 This package handles
@@ -234,5 +235,15 @@ I2list multiset_union(I2list a, I2list b);
 Ilist multiset_to_set(I2list m);
 
 int multiset_occurrences(I2list m, int i);
+/**********************MODIF*/
+BOOL isEmpty(Plist p);
+
+void p_plist_param(Plist p);
+
+void p_plist(Plist p);
+Plist plist_remove_clause(Plist p, void *v);
+Plist plist_remove_plist(Plist lst, Plist q);
+BOOL plist_member_clause(Plist lst, void *v);
+BOOL plist_member_plist(Plist big, Plist small);
 
 #endif  /* conditional compilation of whole file */

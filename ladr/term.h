@@ -279,5 +279,27 @@ BOOL tlist_subset(Plist a, Plist b);
 BOOL tlist_set(Plist a);
 
 Plist free_vars_term(Term t, Plist vars);
+/**************************************************/
 
+BOOL param_term(Term a);
+
+BOOL succ_term(Term a);
+
+Term shift(int J, Term x);
+
+Term var_term(Term a);
+
+BOOL variable_term(Term a);
+
+BOOL pureparam_cst_term(Term t);
+
+BOOL only_succ_occurs_in(Term t);
+
+BOOL succ_occurs_in(Term t);
+
+BOOL succ_occurs_once(Term t);
+
+BOOL regular_term(Term t);
+
+void fprint_term_infix(FILE *fp, Term t);
 #endif  /* conditional compilation of whole file */

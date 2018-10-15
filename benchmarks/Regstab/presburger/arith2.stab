@@ -1,0 +1,28 @@
+// n1 <= n2 <= n3 => n1 + p <= n2 + p <= n3 + p
+//expected: unsat
+
+let LowerOrEqual(Temp,X,Y,n)   := Temp_n /\ Temp_0 /\ /\i=1..n (Temp_i <-> ((X_i <-> Y_i) /\ Temp_i-1 \/ ~X_i /\ Y_i)) in
+let Equal(Temp,X,Y,n)          := /\i=1..n (X_i <-> Y_i) in
+let Different(Temp,X,Y,n)      := \/i=1..n (X_i (+) Y_i) in
+let LowerThan(Temp,X,Y,n)      := LowerOrEqual(Temp,X,Y,n) /\ Different(Temp,X,Y,n) in
+let GreaterOrEqual(Temp,X,Y,n) := LowerOrEqual(Temp,Y,X,n) in
+let GreaterThan(Temp,X,Y,n)    := LowerThan(Temp,Y,X,n) in
+
+let Sum(A,B,S,C,i)   := S_i <-> (A_i (+) B_i (+) C_i) in
+let Carry(A,B,C,i)   := C_i+1 <-> (A_i /\ B_i \/ C_i /\ A_i \/ C_i /\ B_i) in
+let Adder(A,B,S,C,n) := /\i=1..n ( Sum(A,B,S,C,i) /\ Carry(A,B,C,i) ) /\ ~C_1 in
+
+
+let LastBitNull() := ~N1_n+1 /\ ~N2_n+1 /\ ~N3_n+1 /\ ~P_n+1 in
+
+LastBitNull()
+/\ LowerOrEqual(T1,N1,N2,n+1) 
+/\ LowerOrEqual(T2,N2,N3,n+1) 
+/\ Adder(N1,P,N1plusP,T3,n+1)
+/\ Adder(N2,P,N2plusP,T4,n+1)
+/\ Adder(N3,P,N3plusP,T5,n+1) 
+/\ (GreaterThan(T6,N1plusP,N2plusP,n+1) \/ GreaterThan(T7,N2plusP,N3plusP,n+1))
+| n>=0
+
+// vim:ft=regstab
+

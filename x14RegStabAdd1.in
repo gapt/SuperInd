@@ -1,0 +1,25 @@
+% Unsat OK
+% X + 0 = X.
+assign(max_weight, 15).
+set(prolog_style_variables).
+assign(max_given, 100).
+set(raw).
+set(binary_resolution).
+assign(order, kbo).
+assign(literal_selection, none).
+clear(predicate_elim).
+
+list(kbo_weights).
+  s = 3.
+end_of_list.
+
+formulas(sos).
+(p(X) <-> ( -(-(a(X)<->b(X)) <-> c(X)) )) & (c(s(X)) <-> ((a(X) & b(X)) | (c(X) & a(X)) |(c(X) & b(X))) ).
+-c(0).
+-b(X).
+q(0) <-> -(a(0) <-> p(0)).
+q(s(X)) <-> (q(X) | -(a(X) <-> p(X)) ).
+N(X) | q(X).
+end_of_list.
+
+

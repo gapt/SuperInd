@@ -1,0 +1,15 @@
+// Equivalence between the ripple-carry and the carry-propagate adders
+//expected: sat
+
+let Propagate(A,B,i)   := A_i \/ B_i in
+let Generate(A,B,i)    := A_i /\ B_i in
+let PCarry(A,B,C,i)    := C_i+1 <-> (Generate(A,B,i) \/ Propagate(A,B,i) /\ C_i) in
+let Sum(A,B,S,C,i)     := S_i <-> (A_i (+) B_i (+) C_i) in
+let CPAdder(A,B,S,C,n) := /\i=1..n (Sum(A,B,S,C,i) /\ PCarry(A,B,C,i)) /\ ~C_1 in
+let RCarry(A,B,C,i)    := C_i+1 <-> (A_i /\ B_i \/ C_i /\ A_i \/ C_i /\ B_i) in
+let RCAdder(A,B,S,C,n) := /\i=1..n (Sum(A,B,S,C,i) /\ RCarry(A,B,C,i)) /\ ~C_1 in
+let Equal(X,Y)         := /\i=1..n (X_i <-> Y_i) in
+
+CPAdder(A1,A2,S,C,n) /\ RCAdder(A1,A2,S',C',n)
+
+// vim:ft=regstab

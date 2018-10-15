@@ -1,0 +1,41 @@
+assign(max_weight, 15).
+set(prolog_style_variables). 
+assign(max_given, 3500).
+%set(raw).
+set(binary_resolution).
+assign(order, kbo).
+predicate_order([ N,S3, S4, M1, M2, P1, $M1$, $M2$, $M3$,P2, M1plusP1, M2plusP2, S1, S5, T5, T6, T8, $T5$, $T6$,  S2,  $P1$, $P2$, $P3$, M3, P3,T1, T3,  S6 ]).
+assign(age_part, 1).
+assign(max_depth, 4).
+assign(max_megs, 2000).
+set(back_subsume). 
+set(back_demod).
+assign(literal_selection, none).
+clear(predicate_elim).
+list(kbo_weights).
+s = 3.
+end_of_list.
+formulas(sos).
+( ( N(X) | -$M1$(X) ) & ( N(X) | -$M2$(X) ) & ( N(X) | -$M3$(X) ) & ( N(X) | -$P1$(X) ) & ( N(X) | -$P2$(X) ) & ( N(X) | -$P3$(X) )  ) & ( ( N(X) | T1(X) ) & T1(0) & ( N(X) | S1(s(X)) )  ) & ( ( N(X) | T3(X) ) & T3(0) & ( N(X) | S2(s(X)) )  ) & ( ( N(X) | S3(s(X)) ) & -T5(s(0))  ) & ( ( N(X) | S4(s(X)) ) & -T6(s(0))  ) & ( ( ( ( N(X) | T8(X) ) & T8(0) & ( N(X) | S5(s(X)) )  ) & ( ( N(X) | S6(s(X)) )  )  )  )  .  
+S1(0) <-> $T  .
+S1(s(X)) <-> ( S1(X) & (T1(s(X)) <-> ((M1(s(X)) <-> M2(s(X))) & T1(X) | -M1(s(X)) & M2(s(X)))) )  .
+S2(0) <-> $T  .
+S2(s(X)) <-> ( S2(X) & (T3(s(X)) <-> ((P1(s(X)) <-> P2(s(X))) & T3(X) | -P1(s(X)) & P2(s(X)))) )  .
+S3(0) <-> $T  .
+S3(s(X)) <-> ( S3(X) & ( ( M1plusP1(s(X)) <-> -( - (M1(s(X)) <-> P1(s(X)) ) <-> T5(s(X)))  ) & ( $T5$(s(X)) <-> (M1(s(X)) & P1(s(X)) | T5(s(X)) & M1(s(X)) | T5(s(X)) & P1(s(X)))  ) ) )  .
+S4(0) <-> $T  .
+S4(s(X)) <-> ( S4(X) & ( ( M2plusP2(s(X)) <-> -( - (M2(s(X)) <-> P2(s(X)) ) <-> T6(s(X)))  ) & ( $T6$(s(X)) <-> (M2(s(X)) & P2(s(X)) | T6(s(X)) & M2(s(X)) | T6(s(X)) & P2(s(X)))  ) ) )  .
+S5(0) <-> $T  .
+S5(s(X)) <-> ( S5(X) & (T8(s(X)) <-> ((M1plusP1(s(X)) <-> M2plusP2(s(X))) & T8(X) | -M1plusP1(s(X)) & M2plusP2(s(X)))) )  .
+S6(0) <-> $F  .
+S6(s(X)) <-> ( S6(X) | - (M1plusP1(s(X)) <-> M2plusP2(s(X))) )  .
+T5(s(X))  <->  $T5$(X)  .
+T6(s(X))  <->  $T6$(X)  .
+M1(s(X))  <->  $M1$(X)  .
+M2(s(X))  <->  $M2$(X)  .
+M3(s(X))  <->  $M3$(X)  .
+P1(s(X))  <->  $P1$(X)  .
+P2(s(X))  <->  $P2$(X)  .
+P3(s(X))  <->  $P3$(X)  .
+
+end_of_list.

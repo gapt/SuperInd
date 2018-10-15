@@ -1316,7 +1316,7 @@ Term sread_term(String_buf sb, FILE *fout)
     fprint_parse_error(fout, tp.error_message, sb,
 		       tp.start_error, tp.end_error);
     free_token_list(tp.tok);
-    fatal_error("sread_term error");
+    fatal_error("sread_term error0");
   }
   else if (tp.tok != NULL) {
     fprint_parse_error(fout,

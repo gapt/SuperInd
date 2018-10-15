@@ -1,0 +1,20 @@
+% Unsat OK
+assign(max_weight, 15).
+set(raw).
+%clear(loopdet).
+set(random_given).
+set(print_gen).
+set(binary_resolution).
+%clear(neg_binary_resolution).
+assign(literal_selection, none).
+%set(hyper_resolution).
+set(predicate_elim).
+set(input_sos_first).
+set(factor).
+formulas(sos).
+  ( N(x) | -P(x,y) ) & (N(s(y)) | P(x,y) | q(x)) & (-P(x,y) | P(s(x),f(y))) & P(0,a) & (q(x) | -q(s(x))).
+
+end_of_list.
+
+
+

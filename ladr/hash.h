@@ -51,4 +51,6 @@ void hash_destroy(Hashtab h);
 
 void hash_info(Hashtab h);
 
+
+
 #endif  /* conditional compilation of whole file */

@@ -342,11 +342,14 @@ BOOL subsume_di_literals(Literals clit, Context subst, Literals d, Trail *trp)
 static
 BOOL subsumes_di(Literals c, Literals d, Context subst)
 {
-  Trail tr = NULL;
-  BOOL subsumed = subsume_di_literals(c, subst, d, &tr);
-  if (subsumed)
-    undo_subst(tr);
-  return subsumed;
+	Trail tr = NULL;
+	BOOL subsumed = subsume_di_literals(c, subst, d, &tr);
+	if (subsumed)
+		undo_subst(tr);
+	if ((!param_free_lit(c) && !param_free_lit(d)) || (param_free_lit(c) && param_free_lit(d)) )  // Modif
+		return subsumed;
+	else
+		return FALSE;
 }  /* subsumes_di */
 
 /*************
@@ -358,28 +361,39 @@ BOOL subsumes_di(Literals c, Literals d, Context subst)
 static
 Topform di_tree_forward(Ilist vec, Di_tree node, Literals dlits, Context subst)
 {
-  BUMP_SUB_CALLS;
-  if (vec == NULL) {
-    Plist p = node->u.data;
-    while (p) {
-      Topform c = p->v;
-      Nonunit_fsub_tests++;
-      if (subsumes_di(c->literals, dlits, subst))
-	return p->v;
-      p = p->next;
-    }
-    return NULL;
-  }
-  else {
-    void *datum = NULL;
-    Di_tree kid = node->u.kids;
-    /* kids are in increasing order; look at those <= vec->i */
-    while (!datum && kid && kid->label <= vec->i) {
-      datum = di_tree_forward(vec->next, kid, dlits, subst);
-      kid = kid->next;
-    }
-    return datum;
-  }
+	BUMP_SUB_CALLS;
+	if (vec == NULL) {
+		Plist p = node->u.data;
+		while (p) {
+			Topform c = p->v;
+			Nonunit_fsub_tests++;
+			if (subsumes_di(c->literals, dlits, subst))
+
+					return p->v;
+				
+			
+			p = p->next;
+		}
+		return NULL;
+	}
+	else {
+		void *datum = NULL;
+		Di_tree kid = node->u.kids;
+		/* kids are in increasing order; look at those <= vec->i */
+		while (!datum && kid && kid->label <= vec->i) {
+			datum = di_tree_forward(vec->next, kid, dlits, subst);
+			kid = kid->next;
+		}
+		if ((!param_free(datum) && !param_free_lit(dlits)) || (param_free(datum) && param_free_lit(dlits)) ) { //Modif
+			//printf("W ");
+			//p_clause(datum);
+			return datum;
+		}
+		else {
+			return NULL;
+		}
+
+	}
 }  /* di_tree_forward */
 
 /*************
@@ -397,6 +411,8 @@ Topform forward_feature_subsume(Topform d, Di_tree root)
   Ilist f = features(d->literals);
   Context subst = get_context();
   Topform c = di_tree_forward(f, root, d->literals, subst);
+	//printf("T ");
+	//p_clause(c);
   free_context(subst);
   zap_ilist(f);
   return c;
@@ -410,29 +426,29 @@ Topform forward_feature_subsume(Topform d, Di_tree root)
 
 static
 void di_tree_back(Ilist vec, Di_tree node, Literals clits, Context subst,
-		  Plist *subsumees)
+				  Plist *subsumees)
 {
-  BUMP_SUB_CALLS;
-  if (vec == NULL) {
-    Plist p = node->u.data;
-    while (p) {
-      Topform d = p->v;
-      Nonunit_bsub_tests++;
-      if (clits != d->literals && subsumes_di(clits, d->literals, subst))
-	*subsumees = plist_prepend(*subsumees, d);
-      p = p->next;
-    }
-  }
-  else {
-    Di_tree kid = node->u.kids;
-    /* kids are in increasing order; look at those >= vec->i */
-    while (kid && kid->label < vec->i)
-      kid = kid->next;
-    while (kid) {
-      di_tree_back(vec->next, kid, clits, subst, subsumees);
-      kid = kid->next;
-    }
-  }
+	BUMP_SUB_CALLS;
+	if (vec == NULL) {
+		Plist p = node->u.data;
+		while (p) {
+			Topform d = p->v;
+			Nonunit_bsub_tests++;
+			if (clits != d->literals && subsumes_di(clits, d->literals, subst))
+				*subsumees = plist_prepend(*subsumees, d);
+			p = p->next;
+		}
+	}
+	else {
+		Di_tree kid = node->u.kids;
+		/* kids are in increasing order; look at those >= vec->i */
+		while (kid && kid->label < vec->i)
+			kid = kid->next;
+		while (kid) {
+			di_tree_back(vec->next, kid, clits, subst, subsumees);
+			kid = kid->next;
+		}
+	}
 }  /* di_tree_back */
 
 /*************

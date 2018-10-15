@@ -132,6 +132,7 @@ equality is not built in.
 /* PUBLIC */
 BOOL subsumes(Topform c, Topform d)
 {
+  
   Context subst = get_context();
   Trail tr = NULL;
   BOOL subsumed = subsume_literals(c->literals, subst, d, &tr);
@@ -172,6 +173,51 @@ BOOL subsumes_bt(Topform c, Topform d)
   return rc;
 }  /* subsumes_bt */
 
+//***********************Modif******************
+/* PUBLIC */
+/*************
+ *
+ *   subsumes_param()
+ *
+ *************/
+
+BOOL subsumes_param(Topform c, Topform d)
+{
+	if ((param_free(c) && !param_free(d)) || (!param_free(c) && param_free(d)) ){
+		//printf("subsume_param");
+		return FALSE;
+	}
+	 else{
+		/*printf("FF ");
+	p_clause(c);
+	p_clause(d);
+	printf(" FF");*/
+		return subsumes(c, d);
+	 }
+}  /* subsumes_param */
+/*************
+ *
+ *   subsumes_param()
+ *
+ *************/
+
+BOOL subsumes_bt_param(Topform c, Topform d)
+{
+	
+	if ((param_free(c) && !param_free(d)) || (!param_free(c) && param_free(d)) ){
+		//printf("subsume_bt_param");
+		return FALSE;
+	}
+	else{
+		/*printf("FF ");
+		p_clause(c);
+		p_clause(d);
+		printf(" FF");*/
+		return subsumes_bt(c, d);
+	}
+	
+		
+}  /* subsumes_bt_param */
 /*************
  *
  *   forward_subsume()
@@ -184,44 +230,46 @@ BOOL subsumes_bt(Topform c, Topform d)
 /* PUBLIC */
 Topform forward_subsume(Topform d, Lindex idx)
 {
-  Literals dlit;
-  Topform subsumer = NULL;
-  Context subst = get_context();
-  int nd = number_of_literals(d->literals);
-
-  /* We have to consider all literals of d, because when d is
+	Literals dlit;
+	Topform subsumer = NULL;
+	Context subst = get_context();
+	int nd = number_of_literals(d->literals);
+	
+	/* We have to consider all literals of d, because when d is
      subsumed by c, not all literals of d have to match with
      a literal in c.  c is indexed on the first literal only.
-   */
-
-  for (dlit=d->literals; dlit!=NULL && subsumer==NULL; dlit=dlit->next) {
-    Mindex mdx = dlit->sign ? idx->pos : idx->neg;
-    Mindex_pos pos;
-    Term catom = mindex_retrieve_first(dlit->atom, mdx, GENERALIZATION,
-				       NULL, subst, FALSE, &pos);
-    BOOL backtrack = lindex_backtrack(idx);
-    while (catom != NULL && subsumer == NULL) {
-      Topform c = catom->container;
-      if (atom_number(c->literals, catom) == 1) {
-	int nc = number_of_literals(c->literals);
-	/* If c is a unit then we already know it subsumes d; otherwise,
-	 * do a full subsumption check on the clauses.  (We don't let
-	 * a clause subsume a shorter one, because that would cause
-	 * factors to be deleted.)
 	 */
-	if (nc == 1 || (nc <= nd && (backtrack
-				     ? subsumes_bt(c,d)
-				     : subsumes(c,d)))) {
-	  subsumer = c;
-	  mindex_retrieve_cancel(pos);
+	
+	for (dlit=d->literals; dlit!=NULL && subsumer==NULL; dlit=dlit->next) {
+		Mindex mdx = dlit->sign ? idx->pos : idx->neg;
+		Mindex_pos pos;
+		Term catom = mindex_retrieve_first(dlit->atom, mdx, GENERALIZATION,
+										   NULL, subst, FALSE, &pos);
+		BOOL backtrack = lindex_backtrack(idx);
+		while (catom != NULL && subsumer == NULL) {
+			Topform c = catom->container;
+			if (atom_number(c->literals, catom) == 1) {
+				int nc = number_of_literals(c->literals);
+				/* If c is a unit then we already know it subsumes d; otherwise,
+				 * do a full subsumption check on the clauses.  (We don't let
+				 * a clause subsume a shorter one, because that would cause
+				 * factors to be deleted.)
+				 */
+				if ((nc == 1 && param_free(d)) || (nc <= nd && (backtrack // Modif
+											 ? subsumes_bt_param(c,d) //Modif
+											 : subsumes_param(c,d)))) { // Modif
+					//printf("subsume_forward ");
+					//p_clause(c);
+					subsumer = c;
+					mindex_retrieve_cancel(pos);
+				}
+			}
+			if (subsumer == NULL)
+				catom = mindex_retrieve_next(pos);
+		}
 	}
-      }
-      if (subsumer == NULL)
-	catom = mindex_retrieve_next(pos);
-    }
-  }
-  free_context(subst);
-  return subsumer;
+	free_context(subst);
+	return subsumer;
 }  /* forward_subsume */
 
 /*************
@@ -266,8 +314,8 @@ Plist back_subsume(Topform c, Lindex idx)
 	 * a clause subsume a shorter one.)
 	 */
 	if (nc == 1 || (nc <= nd && (backtrack
-				     ? subsumes_bt(c, d)
-				     : subsumes(c, d))))
+				     ? subsumes_bt_param(c, d) //Modif
+				     : subsumes_param(c, d)))) // Modif
 	  subsumees = insert_clause_into_plist(subsumees, d, FALSE);
       }
       datom = mindex_retrieve_next(pos);
@@ -319,8 +367,8 @@ Topform back_subsume_one(Topform c, Lindex idx)
 	 * a clause subsume a shorter one.)
 	 */
 	if (nc == 1 || (nc <= nd && (backtrack
-				     ? subsumes_bt(c, d)
-				     : subsumes(c, d)))) {
+				     ? subsumes_bt_param(c, d) // Modif
+				     : subsumes_param(c, d)))) { // Modif
 	  found = TRUE;
 	  mindex_retrieve_cancel(pos);
 	}
@@ -343,35 +391,35 @@ static
 void atom_conflict(BOOL flipped, Topform c, BOOL sign,
 		    Term a, Lindex idx, void (*empty_proc) (Topform))
 {
-  int n = 0;
-  Context subst1 = get_context();
-  Context subst2 = get_context();
-  Mindex mdx = sign ? idx->neg : idx->pos;
-  Mindex_pos pos;
-  Term b = mindex_retrieve_first(a, mdx, UNIFY,
-				 subst1, subst2, FALSE, &pos);
-  while (b) {
-    Topform d = b->container;
-    if (number_of_literals(d->literals) == 1) {
-      Topform conflictor = d;
-      Topform empty = get_topform();
-
-      if (c->id == 0)
-	assign_clause_id(c);  /* so that justification makes sense */
-      c->used = TRUE;         /* so it won't be discarded */
-
-      empty->justification = binary_res_just(c, 1, conflictor,
-					     flipped ? -1 : 1);
-      inherit_attributes(c, subst1, conflictor, subst2, empty);
-      n++;
-      (*empty_proc)(empty);
-      b = mindex_retrieve_next(pos);
-    }
-    else 
-      b = mindex_retrieve_next(pos);
-  }
-  free_context(subst1);
-  free_context(subst2);
+	int n = 0;
+	Context subst1 = get_context();
+	Context subst2 = get_context();
+	Mindex mdx = sign ? idx->neg : idx->pos;
+	Mindex_pos pos;
+	Term b = mindex_retrieve_first(a, mdx, UNIFY,
+								   subst1, subst2, FALSE, &pos);
+	while (b) {
+		Topform d = b->container;
+		if (number_of_literals(d->literals) == 1) {
+			Topform conflictor = d;
+			Topform empty = get_topform();
+			
+			if (c->id == 0)
+				assign_clause_id(c);  /* so that justification makes sense */
+			c->used = TRUE;         /* so it won't be discarded */
+			
+			empty->justification = binary_res_just(c, 1, conflictor,
+												   flipped ? -1 : 1);
+			inherit_attributes(c, subst1, conflictor, subst2, empty);
+			n++;
+			(*empty_proc)(empty);
+			b = mindex_retrieve_next(pos);
+		}
+		else 
+			b = mindex_retrieve_next(pos);
+	}
+	free_context(subst1);
+	free_context(subst2);
 }  /* atom_conflict */
 
 /*************
@@ -645,49 +693,50 @@ BOOL eq_removable_literal(Topform c, Literals lit)
 /* PUBLIC */
 void simplify_literals2(Topform c)
 {
-  Literals l;
-  int i;
-  BOOL null_literals = FALSE;
-  BOOL tautological = FALSE;
-
-  if (!c->normal_vars)
-    renumber_variables(c, MAX_VARS);
-
-  for (l = c->literals, i = 1; l && !tautological; l = l->next, i++) {
-    Term a = l->atom;
-    BOOL sign = l->sign;
-    if ((!sign && eq_term(a) && term_ident(ARG(a,0), ARG(a,1))) ||
-	/* (!sign && true_term(a)) || */
-	/* (sign && false_term(a)) || */
-	eq_removable_literal(c, l)) {
-      /* literal is FALSE, so remove it */
-      c->justification = append_just(c->justification, xx_just(i));
-      zap_term(l->atom);
-      l->atom = NULL;
-      null_literals = TRUE;
-    }
-    else if ((!sign && true_term(a)) ||
-	     (sign && false_term(a))) {
-      zap_term(l->atom);
-      l->atom = NULL;
-      null_literals = TRUE;
-    }
-    else if ((sign && eq_term(a) && term_ident(ARG(a,0), ARG(a,1))) ||
-	     (sign && true_term(a)) ||
-	     (!sign && false_term(a)))
-      tautological = TRUE;
-  }
-
-  if (null_literals) {
-    c->literals = remove_null_literals(c->literals);
-    c->normal_vars = 0;
-    renumber_variables(c, MAX_VARS);
-  }
-
-  if (tautological || tautology(c->literals)) {
-    zap_literals(c->literals);
-    c->literals = new_literal(TRUE, get_rigid_term(true_sym(), 0));
-    c->literals->atom->container = c;
-    /* justification not necessary because clause will disappear??? */
-  }
+	Literals l;
+	int i;
+	BOOL null_literals = FALSE;
+	BOOL tautological = FALSE;
+	
+	if (!c->normal_vars)
+		renumber_variables(c, MAX_VARS);
+	
+	for (l = c->literals, i = 1; l && !tautological; l = l->next, i++) {
+		Term a = l->atom;
+		BOOL sign = l->sign;
+		if ((!sign && eq_term(a) && term_ident(ARG(a,0), ARG(a,1))) ||
+			/* (!sign && true_term(a)) || */
+			/* (sign && false_term(a)) || */
+			eq_removable_literal(c, l)) {
+			/* literal is FALSE, so remove it */
+			c->justification = append_just(c->justification, xx_just(i));
+			zap_term(l->atom);
+			l->atom = NULL;
+			null_literals = TRUE;
+		}
+		else if ((!sign && true_term(a)) ||
+				 (sign && false_term(a))) {
+			zap_term(l->atom);
+			l->atom = NULL;
+			null_literals = TRUE;
+		}
+		else if ((sign && eq_term(a) && term_ident(ARG(a,0), ARG(a,1))) ||
+				 (sign && true_term(a)) ||
+				 (!sign && false_term(a)))
+			tautological = TRUE;
+	}
+	
+	if (null_literals) {
+		c->literals = remove_null_literals(c->literals);
+		c->normal_vars = 0;
+		renumber_variables(c, MAX_VARS);
+	}
+	
+	if (tautological || tautology(c->literals)) {
+		zap_literals(c->literals);
+		c->literals = new_literal(TRUE, get_rigid_term(true_sym(), 0));
+		c->literals->atom->container = c;
+		/* justification not necessary because clause will disappear??? */
+	}
 }  /* simplify_literals2 */
+

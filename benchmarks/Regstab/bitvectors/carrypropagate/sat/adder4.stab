@@ -1,0 +1,17 @@
+// The propagation can be expressed both as a OR or as a XOR.
+// We show that both are equivalent.
+//expected: sat
+
+let PropagateOR(A,B,i) := A_i \/ B_i in
+let PropagateXOR(A,B,i) := A_i (+) B_i in
+let Generate(A,B,i)  := A_i /\ B_i in
+let CarryOR(A,B,C,i)   := C_i+1 <-> (Generate(A,B,i) \/ PropagateOR(A,B,i) /\ C_i) in
+let CarryXOR(A,B,C,i)   := C_i+1 <-> (Generate(A,B,i) \/ PropagateXOR(A,B,i) /\ C_i) in
+let Sum(A,B,S,C,i)   := S_i <-> (A_i (+) B_i (+) C_i) in
+let AdderOR(A,B,S,C,n) := /\i=1..n (Sum(A,B,S,C,i) /\ CarryOR(A,B,C,i)) /\ ~C_1 in
+let AdderXOR(A,B,S,C,n) := /\i=1..n (Sum(A,B,S,C,i) /\ CarryXOR(A,B,C,i)) /\ ~C_1 in
+let Equal(X,Y)   := /\i=1..n (X_i <-> Y_i) in
+
+AdderOR(A1,A2,S,C,n) /\ AdderXOR(A1,A2,S',C',n)
+
+// vim:ft=regstab

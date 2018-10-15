@@ -326,3 +326,8 @@ BOOL equality_in_clauses(Plist clauses)
   }
 }  /* equality_in_clauses */
 
+/*PUBLIC*/
+/*Responds True if clause is an (alpha-C)Clause*/
+BOOL is_alpha_clause(Topform clause){
+	return ;
+}

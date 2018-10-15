@@ -1646,6 +1646,147 @@ Plist get_clause_ancestors(Topform c)
   return ancestors;
 }  /* get_clause_ancestors */
 
+/****************************** MODIF*****************************/
+/* PUBLIC */
+
+ /*   ......................................                           
+ 
+ //*         iflat
+      ......................................*/
+
+/* iflat return true if c is index_flat, false otherwise.
+ since we have the rank I of c, we just have to check whether the parameter depth is equal to I 
+ */
+
+BOOL iflat(int I, Topform c){
+	Literals lit;
+	Term t;
+	if (false_clause(c->literals)) {
+		return FALSE;
+	}
+	else{
+		for(lit = c->literals; lit != NULL; lit = lit->next){
+		
+			t = lit->atom;
+			if (param_term(t)){
+				return ((term_depth(t)-1)==I);
+				
+			}
+			
+		}
+		
+		p_clause (c);
+		fatal_error(" just.c: iflat : problem free param clause");
+	}
+}
+/************** iflat ************************/
+static
+Plist get_clanc_rank(int id, Plist anc, int rank)
+{
+	Topform c = find_clause_by_id(id);
+	//printf("ANC =");p_plist(anc);
+	if (c == NULL) {
+		printf("get_clanc_rank, clause with id=%d not found.\n", id);
+		fatal_error("get_clanc_rank, clause not found.");
+	}
+	
+	if (!plist_member_clause(anc, c)) {
+		Ilist parents, p;
+		if(get_rank(c) == rank){
+			anc = insert_clause_into_plist(anc, c, TRUE);
+		}
+			parents = get_parents(c->justification, TRUE);
+					
+			for (p = parents; p; p = p->next) {
+				
+				Topform cl = find_clause_by_id(p->i);
+				if(get_rank(cl) >= rank ){
+					anc = get_clanc_rank(p->i, anc, rank);
+					
+				}
+			}
+			zap_ilist(parents);
+		
+	}
+	//printf("NN =");p_plist(anc);
+	return anc;
+}  /* get_clanc_rank */
+
+/*.........................*/
+Plist get_clause_ancestors_ofrank(Topform c, int rank)
+{
+	Plist ancestors = get_plist();
+	ancestors = get_clanc_rank(c->id, NULL, rank);
+	//printf("anc ");p_plist(ancestors);
+	ancestors = plist_remove_clause(ancestors, c);
+	
+	return ancestors;
+}  /* get_clause_ancestors */
+
+Plist get_clause_ancestors_ofrank2(Topform c, int rank, BOOL index_flat)
+{
+	Plist q;
+	Plist ancestors =NULL;
+	Plist clause_ancestors = get_clause_ancestors(c);
+	//printf("ss0");p_plist(clause_ancestors);printf("ss1");
+	for (q = clause_ancestors; q; q = q->next) {
+		Topform d=(Topform)q->v;
+		//p_clause(d);printf("tt rank = %d I = %d ", get_rank(d), I );
+		if (get_rank(d)==rank) {
+			if (index_flat) {
+				if (iflat(rank,d)) {
+					ancestors = insert_clause_into_plist(ancestors, d, TRUE);
+				}
+			}
+			else {
+				ancestors = insert_clause_into_plist(ancestors, d, TRUE);
+			}
+			//printf("B");
+		}
+	}
+	
+	return ancestors;
+}  /* get_clause_ancestors_ofrank2 */
+
+
+Plist get_ancestors_of_rank2(int I, Plist EmptyCl, BOOL index_flat){
+	Plist p, ancestors,q;
+	ancestors=NULL;
+	
+	Topform c,d;
+	
+	for (p = EmptyCl; p; p = p->next) {
+		c = (Topform)p->v;
+		//ancestors = get_clanc_(c->id, ancestors, I);
+		Plist clause_ancestors = get_clause_ancestors(c);
+		//printf("ss0");p_plist(clause_ancestors);printf("ss1");
+		for (q = clause_ancestors; q; q = q->next) {
+			d=(Topform)q->v;
+			//p_clause(d);printf("tt rank = %d I = %d ", get_rank(d), I );
+			if (get_rank(d)==I) {
+				if (!plist_member_clause(ancestors, d) && !pureparam_cst_topform(d)){ // && !clause_ident_order(c, d)) {
+					if (index_flat) {
+						if (iflat(I,d)) {
+							ancestors = insert_clause_into_plist(ancestors, d, TRUE);
+						}
+					}
+					else {
+						ancestors = insert_clause_into_plist(ancestors, d, TRUE);
+					}
+
+					
+				}
+				//printf("B");
+			}
+		}
+		
+	}
+		
+	//printf("t0");p_plist(ancestors);printf("t1");
+	return ancestors;
+}
+
+/**********************************************************/
 /*************
  *
  *   proof_length()

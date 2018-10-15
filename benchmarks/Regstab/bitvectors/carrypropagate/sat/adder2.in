@@ -1,0 +1,33 @@
+%Commutativity of the carry-propagate adder
+
+
+assign(max_weight, 15).
+set(prolog_style_variables). 
+assign(max_given, 200).
+set(raw).
+
+set(index_flat).
+set(print_gen).
+set(superind).
+set(cycle2).
+set(rank_given).
+set(binary_resolution).
+set(ordered_res).
+set(back_subsume).
+assign(order, kbo).
+%assign(literal_selection, all_negative).
+clear(predicate_elim).
+list(kbo_weights).
+s = 3.
+end_of_list.
+formulas(sos).
+( ( N(X) | S1(X) ) & -C(s(0))  ) & ( ( N(X) | S2(X) ) & -CP(s(0))  ) .  
+S1(0) <-> $T  .
+S1(s(X)) <-> ( S1(X) & ( ( S(s(X)) <-> -( - (A1(s(X)) <-> A2(s(X)) ) <-> C(s(X)))  ) & ( $C$(s(X)) <-> ( ( A1(s(X)) & A2(s(X))  ) | ( A1(s(X)) | A2(s(X))  ) & C(s(X)))  ) ) )  .
+S2(0) <-> $T  .
+S2(s(X)) <-> ( S2(X) & ( ( SP(s(X)) <-> -( - (A2(s(X)) <-> A1(s(X)) ) <-> CP(s(X)))  ) & ( $CP$(s(X)) <-> ( ( A2(s(X)) & A1(s(X))  ) | ( A2(s(X)) | A1(s(X))  ) & CP(s(X)))  ) ) )  .
+
+C(s(X))  <->  $C$(X)  .
+CP(s(X))  <->  $CP$(X)  .
+
+end_of_list.

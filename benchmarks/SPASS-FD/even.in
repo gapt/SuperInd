@@ -1,0 +1,21 @@
+% Unsat OK
+%assign(max_seconds, 1).
+%set(raw).
+%clear(auto_inference).
+set(prolog_style_variables).
+set(print_gen).
+set(binary_resolution).
+%clear(ordered_res).
+assign(max_given, 600).
+assign(literal_selection, none).
+clear(predicate_elim).
+
+formulas(sos).
+N(X) | even(X).
+even(0).
+even(X) -> even1(s(X)).
+even(s(X)) <-> even1(X).
+
+
+end_of_list.
+

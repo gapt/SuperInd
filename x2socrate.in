@@ -1,0 +1,10 @@
+
+formulas(sos).
+  
+  homme(elias).
+   -homme(x) | mortel(x).
+  -mortel(x).
+ 
+end_of_list.
+
+clear(predicate_elim).

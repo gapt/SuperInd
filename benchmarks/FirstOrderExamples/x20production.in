@@ -1,0 +1,47 @@
+set(prolog_style_variables). 
+assign(max_given, 2300).
+%set(raw).
+set(index_flat).
+%set(print_gen).
+set(superind).
+set(cycle2).
+set(rank_given).
+assign(start_rank, 1).
+set(binary_resolution).
+set(ordered_res).
+set(paramodulation).
+%set(back_subsume).
+assign(order, kbo).
+clear(predicate_elim).
+list(kbo_weights).
+ s = 5.
+end_of_list.
+%Je pense qu'on peut facilement trouver des exemples intressants suivant %ce principe, avec pas mal de variations possibles et pouvant tre %compliques autant qu'on veut. Un exemple trs simple:
+%p_i(x,y): code le fait que la ressource x est associe au client y ˆ %l'instant i
+%q(x,y): le fait que le client demande la ressource x
+%r_i(x,y): code le fait que la ressource x a djˆ t associe au client y %(avant l'instant i)
+
+%On peut considrer un nbre arbitraire (mais fix, sf ˆ considrer des %schmas avec deux paramtres...) de clients et de ressources.
+formulas(sos).
+
+
+%On peut ensuite dfinir une politique d'attribution comme un ensemble de %clauses du premier ordre et utiliser le calcul pour vrifier ses %proprits. Par exemple, on peut supposer que les clients sont totalement %ordonns et que toute ressource r est affecte en priorit au client %maximal qui la demande. Puis on vrifie que tout client finit par obtenir %la ressource qu'il souhaite.
+a > b.
+b > c.
+a > c.
+p(0,a,r1).
+p(0,b,r2).
+p(0,c,r3).
+-(p(I,X,R) & (T != R)) | -p(I,X,T). 
+  
+-( (X > Z) &  q(X,R) & q(Z,R) &  -r(I,R,T) ) | p(I,X,R).
+
+-r(I,X,T) | -q(X,T).
+
+-(p(I,X,R) & -q(Z,R) ) | p(s(I),X,R).
+ 
+-(p(I,X,R) & (q(Z,R) & X > Z )) | p(s(I),X,R). 
+N(I) | -p(I,Z,R).
+
+end_of_list.
+

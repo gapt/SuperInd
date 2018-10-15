@@ -1,0 +1,12 @@
+// Associativity of the ripple-carry adder
+//expected: sat
+
+let Sum(A,B,S,C,i)   := S_i <-> (A_i (+) B_i (+) C_i) in
+let Carry(A,B,C,i)   := C_i+1 <-> (A_i /\ B_i \/ C_i /\ A_i \/ C_i /\ B_i) in
+let Adder(A,B,S,C,n) := /\i=1..n (Sum(A,B,S,C,i) /\ Carry(A,B,C,i)) /\ ~C_1 in
+let Different(X,Y)   := \/i=1..n (X_i (+) Y_i) in
+
+Adder(A1,A2,B1,C1,n) /\ Adder(B1,A3,S,C1',n) 
+/\ Adder(A1,B2,S',C2',n) /\ Adder(A2,A3,B2,C2,n) 
+
+// vim:ft=regstab

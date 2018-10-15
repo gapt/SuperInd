@@ -89,18 +89,19 @@ BOOL eliminable_relation(int symbol, Plist clauses, BOOL equality)
 static
 Ilist eliminable_relations(Plist clauses, BOOL equality)
 {
-  Ilist rsyms = rsym_set_in_topforms(clauses);
-  Ilist eliminable = NULL;
-  Ilist p;
-  for (p = rsyms; p; p = p->next) {
-    if (!is_eq_symbol(p->i) &&          /* don't allow equalities */
-	sn_to_arity(p->i) != 0 &&      /* don't allow prop atoms */
-	eliminable_relation(p->i, clauses, equality))
-
-      eliminable = ilist_append(eliminable, p->i); 
-  }
-  zap_ilist(rsyms);
-  return eliminable;
+	Ilist rsyms = rsym_set_in_topforms(clauses);
+	Ilist eliminable = NULL;
+	Ilist p;
+	for (p = rsyms; p; p = p->next) {
+		if (!is_eq_symbol(p->i) &&          /* don't allow equalities */
+			sn_to_arity(p->i) != 0 &&
+			!is_param_symbol(p->i) &&      /* don't allow prop atoms */
+			eliminable_relation(p->i, clauses, equality))
+			
+			eliminable = ilist_append(eliminable, p->i); 
+	}
+	zap_ilist(rsyms);
+	return eliminable;
 }  /* eliminable_relations */
 
 /*************
@@ -207,32 +208,34 @@ Plist incorporate_new_clauses(Plist sos, Plist new, BOOL echo)
 static
 Plist elim_relation(int symbol, Plist sos, Clist disabled, BOOL echo)
 {
-  /* this does a naive given-clause loop */
-  Plist usable = NULL;
-  while (sos) {
-    Plist new;
-    Topform given = sos->v;
-    sos = plist_pop(sos);
-    usable = plist_append(usable, given);
+	/* this does a naive given-clause loop */
+	Plist usable = NULL;
+	while (sos) {
+		Plist new;
+		Topform given = sos->v;
+		sos = plist_pop(sos);
+		usable = plist_append(usable, given);
 #ifdef GEN_DEBUG
-    printf("\ngiven: "); f_clause(given);
+		printf("\ngiven: "); f_clause(given);
 #endif
-    new = gen_given(symbol, given, usable);
-    sos = incorporate_new_clauses(sos, new, echo);
-  }
-  /* partition usable into clauses with and without symbol */
-  {
-    Plist without = NULL;
-    Plist p;
-    for (p = usable; p; p = p->next) {
-      if (rsym_occurrences(symbol, p->v) > 0)
-	clist_append(p->v, disabled);
-      else
-	without = plist_append(without, p->v);
-    }
-    zap_plist(usable);
-    return without;
-  }
+		new = gen_given(symbol, given, usable);
+		sos = incorporate_new_clauses(sos, new, echo);
+	}
+	/* partition usable into clauses with and without symbol */
+	{
+		Plist without = NULL;
+		Plist p;
+		for (p = usable; p; p = p->next) {
+			if (rsym_occurrences(symbol, p->v) > 0)
+				clist_append(p->v, disabled);
+			else
+				without = plist_append(without, p->v);
+				
+			
+		}
+		zap_plist(usable);
+		return without;
+	}
 }  /* elim_relation */
 
 /*************
@@ -255,30 +258,31 @@ the end result do not have IDs.
 /* PUBLIC */
 void predicate_elimination(Clist clauses, Clist disabled, BOOL echo)
 {
-  Plist clauses2 = prepend_clist_to_plist(NULL, clauses);
-  BOOL equality = equality_in_clauses(clauses2);  /* eq => different method */
-  Ilist syms = eliminable_relations(clauses2, equality);
-
-  if (syms == NULL) {
-    zap_plist(clauses2);
-    if (echo)
-      printf("\nNo predicates eliminated.\n");
-  }
-  else {
-    clist_remove_all_clauses(clauses);
-    while (syms) {
-      /* use first symbol, discard rest, get new list */
-      if (echo)
-	  printf("\nEliminating %s/%d\n",
-		 sn_to_str(syms->i),
-		 sn_to_arity(syms->i));
+	Plist clauses2 = prepend_clist_to_plist(NULL, clauses);
+	BOOL equality = equality_in_clauses(clauses2);  /* eq => different method */
 	
-      clauses2 = elim_relation(syms->i, clauses2, disabled, echo);
-      zap_ilist(syms);
-      syms = eliminable_relations(clauses2, equality);
-    }
-    clist_append_plist(clauses, clauses2);
-    zap_plist(clauses2);
-  }
+	Ilist syms = eliminable_relations(clauses2, equality);
+	
+	if (syms == NULL) {
+		zap_plist(clauses2);
+		if (echo)
+			printf("\nNo predicates eliminated.\n");
+	}
+	else {
+		clist_remove_all_clauses(clauses);
+		while (syms) {
+			/* use first symbol, discard rest, get new list */
+			if (echo)
+				printf("\nEliminating %s/%d\n",
+					   sn_to_str(syms->i),
+					   sn_to_arity(syms->i));
+			
+			clauses2 = elim_relation(syms->i, clauses2, disabled, echo);
+			zap_ilist(syms);
+			syms = eliminable_relations(clauses2, equality);
+		}
+		clist_append_plist(clauses, clauses2);
+		zap_plist(clauses2);
+	}
 }  /* predicate_elimination */
 

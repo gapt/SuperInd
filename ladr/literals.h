@@ -147,4 +147,24 @@ Term term_at_position(Literals lits, Ilist pos);
 
 Ilist pos_predicates(Ilist p, Literals lits);
 
+/****************************MODIF*************/
+BOOL false_clause(Literals lits);
+
+Literals param_of_topform(Literals lits);
+
+Literals remove_param_literals(Literals l);
+
+int count_literal(Literals lits);
+
+BOOL include(Literals lits, Literals lit);
+
+BOOL literals_ident(Literals lits1, Literals lits2);
+
+BOOL loop_literals(Literals lits);
+
+BOOL param_free_lit(Literals l);
+
+int compute_rank_lit(Literals l);
+
+
 #endif  /* conditional compilation of whole file */

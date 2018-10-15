@@ -1,0 +1,15 @@
+// n >= 0
+//expected: unsat
+
+let LowerOrEqual(Temp,X,Y,n)   := Temp_n /\ Temp_0 /\ /\i=1..n (Temp_i <-> ((X_i <-> Y_i) /\ Temp_i-1 \/ ~X_i /\ Y_i)) in
+let Equal(Temp,X,Y,n)          := /\i=1..n (X_i <-> Y_i) in
+let Different(Temp,X,Y,n)      := \/i=1..n (X_i (+) Y_i) in
+let LowerThan(Temp,X,Y,n)      := LowerOrEqual(Temp,X,Y,n) /\ Different(Temp,X,Y,n) in
+let GreaterOrEqual(Temp,X,Y,n) := LowerOrEqual(Temp,Y,X,n) in
+let GreaterThan(Temp,X,Y,n)    := LowerThan(Temp,Y,X,n) in
+
+let Zero(X) := /\i=1..n ~X_i in
+
+LowerThan(T,A,B,n) /\ Zero(B)
+
+// vim:ft=regstab

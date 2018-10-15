@@ -1,0 +1,69 @@
+%
+ %	============================== PROOF =================================
+%	
+%	% Proof 1 at 0.01 (+ 0.00) seconds.
+%	% Given clauses 53.
+%	
+%	% number of calls to fixpoint : 4 
+%	 S_init  : 
+%	 (22:  [ S1(v0) if  n = s(v0) ].
+%	28:  [ Cl1psi(v0) if  n = s(v0) ].
+%	33:  [ -$A$(v0) if  n = s(v0) ].
+%	) 
+%	 S_loop  : 
+%	 (44:  [ -$A$(v0) if  n = s(s(v0)) ].
+%	39:  [ Cl1psi(v0) if  n = s(s(v0)) ].
+%	35:  [ S1(v0) if  n = s(s(v0)) ].
+%	) 
+%	 The empty clauses  : 
+%	 (21:  [  n = 0 ].
+%	38:  [  n = s(0) ].
+%	49:  [  n = s(s(0)) ].
+%	) max_rank 3 
+%	
+%	============================== end of proof ==========================
+%	
+%	============================== STATISTICS ============================
+%	
+%	Given=53. Generated=92. Kept=57. proofs=1.
+%	Usable=34. Sos=4. Demods=0. Limbo=0, Disabled=35. Hints=0.
+%	Kept_by_rule=0, Deleted_by_rule=0.
+%	Forward_subsumed=14. Back_subsumed=19.
+%	Sos_limit_deleted=0. Sos_displaced=0. Sos_removed=0.
+%	New_demodulators=0 (0 lex), Back_demodulated=0. Back_unit_deleted=0.
+%	Demod_attempts=0. Demod_rewrites=0.
+%	Res_instance_prunes=0. Para_instance_prunes=0. Basic_paramod_prunes=0.
+%	Nonunit_fsub_feature_tests=60. Nonunit_bsub_feature_tests=77.
+%	Megabytes=0.11.
+%	User_CPU=0.01, System_CPU=0.00, Wall_clock=0.
+%	
+%	============================== end of statistics =====================
+%	
+
+
+assign(max_weight, 15).
+set(prolog_style_variables). 
+assign(max_given, 2300).
+set(raw).
+set(index_flat).
+set(print_gen).
+set(superind).
+set(rank_given).
+set(cycle2).
+set(binary_resolution).
+set(ordered_res).
+set(back_subsume).
+assign(order, kbo).
+%assign(literal_selection, all_negative).
+clear(predicate_elim).
+list(kbo_weights).
+s = 3.
+end_of_list.
+
+formulas(sos).
+( N(X) | Cl0phi(X) ) & (-Cl0phi(0) & (-Cl1psi(0) | A(s(0))  ) ) & ( N(X) | S1(X) )  .  
+S1(0) <-> $T  .
+S1(s(X)) <-> ( S1(X) & ( (-Cl0phi(s(X)) | Cl1psi(s(X))) & (-Cl0phi(s(X)) | -$A$(s(X))) & (-Cl1psi(s(X)) | Cl1psi(X)) & (-Cl1psi(s(X)) | -A(s(X)) | $A$(s(X)))  ) )  .
+A(s(X))  <->  $A$(X)  .
+
+end_of_list.

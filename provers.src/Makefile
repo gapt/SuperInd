@@ -17,7 +17,8 @@ PRVR_OBJ = index_lits.o forward_subsume.o demodulate.o\
 	   search.o\
 	   utilities.o\
 	   provers.o\
-	   foffer.o
+	   foffer.o\
+	   loop.o
 
 OBJECTS = $(PRVR_OBJ)
 
@@ -114,10 +115,11 @@ white_black.o:   	white_black.h search-structures.h
 
 actions.o:   	actions.h search-structures.h
 
+loop.o:       loop.h  ../ladr/literals.h ../ladr/attrib.h ../ladr/formula.h ../ladr/maximal.h
 search.o:   	search.h search-structures.h semantics.h pred_elim.h demodulate.h index_lits.h forward_subsume.h unfold.h actions.h giv_select.h white_black.h utilities.h ../ladr/interp.h ../ladr/ioutil.h ../ladr/subsume.h ../ladr/resolve.h ../ladr/clauses.h ../ladr/clause_misc.h ../ladr/ioutil.h ../ladr/ladr.h ../ladr/clock.h ../ladr/subsume.h ../ladr/di_tree.h ../ladr/subsume.h ../ladr/clock.h ../ladr/parautil.h ../ladr/clist.h ../ladr/ioutil.h
 
 utilities.o:   	utilities.h search-structures.h
 
-provers.o:   	provers.h search.h search-structures.h semantics.h pred_elim.h demodulate.h index_lits.h forward_subsume.h unfold.h actions.h giv_select.h white_black.h utilities.h ../ladr/interp.h ../ladr/ioutil.h ../ladr/subsume.h ../ladr/resolve.h ../ladr/clauses.h ../ladr/clause_misc.h ../ladr/ioutil.h ../ladr/ladr.h ../ladr/clock.h ../ladr/subsume.h ../ladr/di_tree.h ../ladr/subsume.h ../ladr/clock.h ../ladr/parautil.h ../ladr/clist.h ../ladr/ioutil.h
+provers.o:   	provers.h search.h search-structures.h semantics.h pred_elim.h demodulate.h index_lits.h forward_subsume.h unfold.h actions.h giv_select.h white_black.h utilities.h loop.h ../ladr/interp.h ../ladr/ioutil.h ../ladr/subsume.h ../ladr/resolve.h ../ladr/clauses.h ../ladr/clause_misc.h ../ladr/ioutil.h ../ladr/ladr.h ../ladr/clock.h ../ladr/subsume.h ../ladr/di_tree.h ../ladr/subsume.h ../ladr/clock.h ../ladr/parautil.h ../ladr/clist.h ../ladr/ioutil.h
 
-foffer.o:   	foffer.h search.h search-structures.h semantics.h pred_elim.h demodulate.h index_lits.h forward_subsume.h unfold.h actions.h giv_select.h white_black.h utilities.h ../ladr/interp.h ../ladr/ioutil.h ../ladr/subsume.h ../ladr/resolve.h ../ladr/clauses.h ../ladr/clause_misc.h ../ladr/ioutil.h ../ladr/ladr.h ../ladr/clock.h ../ladr/subsume.h ../ladr/di_tree.h ../ladr/subsume.h ../ladr/clock.h ../ladr/parautil.h ../ladr/clist.h ../ladr/ioutil.h
+foffer.o:   	foffer.h search.h search-structures.h semantics.h pred_elim.h demodulate.h index_lits.h forward_subsume.h unfold.h actions.h giv_select.h loop.h white_black.h utilities.h ../ladr/interp.h ../ladr/ioutil.h ../ladr/subsume.h ../ladr/resolve.h ../ladr/clauses.h ../ladr/clause_misc.h ../ladr/ioutil.h ../ladr/ladr.h ../ladr/clock.h ../ladr/subsume.h ../ladr/di_tree.h ../ladr/subsume.h ../ladr/clock.h ../ladr/parautil.h ../ladr/clist.h ../ladr/ioutil.h

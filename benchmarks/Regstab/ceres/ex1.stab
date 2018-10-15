@@ -1,0 +1,13 @@
+// Example 1 coming from Ceres, simplified
+//expected: unsat
+
+let CS0    := ~Cl0phi_0 /\ (~Cl1psi_0 \/ A_1) in
+let CS1(k) := 
+  (~Cl0phi_k+1 \/ Cl1psi_k+1) /\
+  (~Cl0phi_k+1 \/ ~A_k+2) /\
+  (~Cl1psi_k+1 \/ Cl1psi_k) /\
+  (~Cl1psi_k+1 \/ ~A_k+1 \/ A_k+2)
+  in
+
+Cl0phi_n /\ CS0() /\ /\k=0..n CS1(k) | n>=0
+

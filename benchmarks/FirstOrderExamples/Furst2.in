@@ -1,0 +1,134 @@
+%set(raw).
+assign(max_given, 1000).
+set(binary_resolution).
+set(paramodulation).
+set(ordered_para).
+assign(order, kbo).
+%set(print_gen).
+set(ordered_res).
+assign(max_depth, 4).
+assign(max_literals,6).
+assign(max_vars, 4).
+set(superind).
+set(random_given).
+%set(rank_given).
+%set(breadth_first).
+assign(literal_selection, none).
+clear(predicate_elim).
+
+formulas(assumptions).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Inductive lemma
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+N(y) | (sch(c,y) & -lem1(c,y)).
+% lem1_disj(x,y) is the disjunction of the p(j)*s4(x)=x
+% for j=0 to y-1
+
+-lem1_disj(x,s(y)) | (p(y)*s4(x)=x) | lem1_disj(x,y).
+lem1_disj(x,s(y)) | -(p(y)*s4(x)=x).
+lem1_disj(x,s(y)) | -(lem1_disj(x,y)).
+-lem1_disj(x,0).
+
+% lem1(x,y) holds iff s(0)<x => lem1_disj(x,y)
+
+-lem1(x,y) | -(s(0)<x) | lem1_disj(x,y).
+lem1(x,y) | (s(0)<x).
+lem1(x,y) | -lem1_disj(x,y).
+
+% inductive proof of sch(x,r)=>lem1(x,r)
+% base case OK
+%sch(x,0).
+%-lem1(c,0).
+
+% inductive case OK
+%sch(c,s®).
+%-lem1(c,s®).
+
+
+% inductive proof of lem1(s(0)+(ts(0)*x),s(r))=> lem2(x,r)
+
+% base case OK
+% lem1(s(0)+(ts(0)*c),s(0)).
+% -lem2(c,0).
+
+% inductive case OK
+%lem1(s(0)+(ts(0)*c),s(s(r))).
+%-lem2(c,s(r)).
+%-lem1(s(0)+(ts(0)*x),s(r)) | lem2(x,r).
+
+
+
+
+% basic axioms
+
+0+x=x.
+x*y=y*x.
+0<s(0).
+0<p(x).
+s(0)<p(y).
+x*(y*z)=(x*y)*z.
+-(0<x) | -(0<y) | 0<x*y.
+-(s(0)<x) | -(x=s(0)).
+-(x<y) | (x<s(0)+y).
+-(0<y) | s(0)<s(0)+(y*x).
+x<s(x).
+-(x<x).
+
+% key arithmetic property:
+% two distinct elements in [0,z-1] cannot be equal modulo z
+
+-(x<y) | -(x<z) | -(y<z) | -(x+(xx*z)=y+(yy*z)).
+
+% every natural number x has a smallest divisor
+
+
+x=s(0) | S1(x)*s4(x)=x.
+
+% sch_disj(x,y) means that S1(x) is equal to one of the
+% p(s(z)), for z=0..y-1
+
+-sch_disj(x,s(y)) | S1(x)=p(y) | sch_disj(x,y).
+-sch_disj(x,0).
+sch_disj(x,s(y)) | -(S1(x)=p(y)).
+sch_disj(x,s(y)) | -sch_disj(x,y).
+
+% sch(x,y) means that sch_disj(x,y) holds if x is not equal to 1
+
+-sch(x,y) | x=s(0) | sch_disj(x,y).
+sch(x,y) | -(x=s(0)).
+sch(x,y) | -sch_disj(x,y).
+
+%% Consequently, sch(x,s^n(0)) expresses the fact that
+%% every prime number is equal to one of the [p(0),..p(s^{n-1}(0))]
+
+% Instances of the whole problem
+%sch(x,s(0)).  % r=1  OK
+%sch(x,s(s(0))).  % r=2  not OK
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Lemma: a product of prime numbers is > 0
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Proof OK %
+%%%%%%%%%%%%%
+
+% ts(x) is the product of prime numbers
+% p(0)...p(x-1)
+
+ts(s(x)) = ts(x)*p(s(x)).
+ts(0)=p(0).
+
+%% Induction proof for ts(x)
+
+% base case
+%-(0<ts(0)).
+
+% inductive case
+%0<ts(r).
+%-(0<ts(s(r))).
+
+0<ts(x).
+
+
+
+end_of_list.

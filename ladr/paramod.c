@@ -244,37 +244,37 @@ BOOL from_parent_test(Literals from_lit, int check)
 static
 BOOL into_parent_test(Literals into_lit, int check)
 {
-  Topform into_parent = into_lit->atom->container;
-  if (into_lit->sign) {
-    /* into positive literal */
-    if (Positive_inference)
-      return
-	positive_clause(into_parent->literals) &&
-	(!Ordered_inference ||
-	 maximal_literal(into_parent->literals, into_lit, check));
-    else
-      return
-	!exists_selected_literal(into_parent->literals) &&
-	(!Ordered_inference ||
-	 maximal_literal(into_parent->literals, into_lit, check));
-  }
-  else {
-    /* into negative literal */
-    if (Positive_inference) {
-      if (exists_selected_literal(into_parent->literals))
-	return selected_literal(into_lit);
-      else
-	return (!Ordered_inference ||
-		maximal_signed_literal(into_parent->literals,into_lit,check));
-    }
-    else {
-      if (exists_selected_literal(into_parent->literals))
-	return selected_literal(into_lit);
-      else
-	return (!Ordered_inference ||
-		maximal_literal(into_parent->literals, into_lit, check));
-    }
-  }
+	Topform into_parent = into_lit->atom->container;
+	if (into_lit->sign) {
+		/* into positive literal */
+		if (Positive_inference)
+			return
+			positive_clause(into_parent->literals) &&
+			(!Ordered_inference ||
+			 maximal_literal(into_parent->literals, into_lit, check));
+		else
+			return
+			!exists_selected_literal(into_parent->literals) &&
+			(!Ordered_inference ||
+			 maximal_literal(into_parent->literals, into_lit, check));
+	}
+	else {
+		/* into negative literal */
+		if (Positive_inference) {
+			if (exists_selected_literal(into_parent->literals))
+				return selected_literal(into_lit);
+			else
+				return (!Ordered_inference ||
+						maximal_signed_literal(into_parent->literals,into_lit,check));
+		}
+		else {
+			if (exists_selected_literal(into_parent->literals))
+				return selected_literal(into_lit);
+			else
+				return (!Ordered_inference ||
+						maximal_literal(into_parent->literals, into_lit, check));
+		}
+	}
 }  /* into_parent_test */
 
 /*************
@@ -373,6 +373,19 @@ void para_into(Literals from_lit, int from_side, Context cf, Ilist from_pos,
 				       copy_ilist(from_pos),
 				       into_clause,
 				       copy_ilist(into_pos));
+		/**************************************Modif**********************/
+		// Initialize the rank
+		init_rank(p);
+		// if the m.g.u is at least of the form s(s(x)) the clause won't be kept
+		//if (get_rank(into_clause) != -1 && (get_rank(p) > get_rank(into_clause) +1 || get_rank(p) > compute_rank_lit(from_lit) +1 )){
+		if ((get_rank(into_clause) != -1 && get_rank(p) > get_rank(into_clause) +1 ) || (get_rank(p) < get_rank(into_clause)) ){
+			p->rank =-2;
+		}
+		// if it's not an (alpha-C)-clause, p will be deleted in cl_process
+		if (!alpha_C_clause(p)) {
+			p->rank=-3;
+		}
+			/************************************************************/
 	  (*proc_proc)(p);
 	}
 	undo_subst(tr);
@@ -440,27 +453,27 @@ For nonoriented equality atoms, we go from and into both sides.
 
 /* PUBLIC */
 void para_from_into(Topform from, Context cf,
-		    Topform into, Context ci,
-		    BOOL check_top,
-		    void (*proc_proc) (Topform))
+					Topform into, Context ci,
+					BOOL check_top,
+					void (*proc_proc) (Topform))
 {
-  if (exists_selected_literal(from->literals))
-    return;  /* cannot para from clause with selected literals */
-  else {
-    Literals from_lit;
-    for (from_lit = from->literals; from_lit; from_lit = from_lit->next) {
-      if (from_parent_test(from_lit, FLAG_CHECK)) {
-	Literals into_lit;
-	for (into_lit = into->literals; into_lit; into_lit = into_lit->next) {
-	  if (into_parent_test(into_lit, FLAG_CHECK)) {
-	    para_into_lit(from_lit,0,cf,into_lit,ci,check_top,proc_proc);  /* from L */
-	    if (para_from_right(from_lit->atom))
-	      para_into_lit(from_lit,1,cf,into_lit,ci,check_top,proc_proc); /* from R */
-	  }
+	if (exists_selected_literal(from->literals))
+		return;  /* cannot para from clause with selected literals */
+	else {
+		Literals from_lit;
+		for (from_lit = from->literals; from_lit; from_lit = from_lit->next) {
+			if (from_parent_test(from_lit, FLAG_CHECK)) {
+				Literals into_lit;
+				for (into_lit = into->literals; into_lit; into_lit = into_lit->next) {
+					if (into_parent_test(into_lit, FLAG_CHECK)) {
+						para_into_lit(from_lit,0,cf,into_lit,ci,check_top,proc_proc);  /* from L */
+						if (para_from_right(from_lit->atom))
+							para_into_lit(from_lit,1,cf,into_lit,ci,check_top,proc_proc); /* from R */
+					}
+				}
+			}
+		}
 	}
-      }
-    }
-  }
 }  /* para_from_into */
 
 /*************

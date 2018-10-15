@@ -1,0 +1,31 @@
+assign(max_weight, 30).
+%set(raw).
+%set(print_gen).
+assign(order, kbo).
+assign(max_given, 100).
+set(binary_resolution).
+clear(neg_binary_resolution).
+assign(literal_selection, none).
+clear(predicate_elim).
+%predicate_order([N,=]).
+list(kbo_weights).
+  s = 3.
+end_of_list.
+formulas(sos).
+  X+Y=Y+X.
+  X*Y=Y*X.
+  X*1=X.
+  1+X=s(X).
+%s(0)=1.
+%s(X)=X+1.
+  sigma(1)=1.
+minus(X,X)=0.
+minus(X+Y,Y)=X.
+2*minus(X,Y)=minus(2*X,2*Y).
+minus(sigma(s(X)),s(X))=sigma(X).
+   N(X) | 2*sigma(X)  != X*s(X) .
+   
+
+end_of_list.
+
+

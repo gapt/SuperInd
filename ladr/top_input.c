@@ -362,7 +362,7 @@ void flag_handler(FILE *fout, Term t, BOOL echo, int unknown_action)
 {
   int flag = str_to_flag_id(sn_to_str(SYMNUM(ARG(t,0))));
   if (flag == -1)
-    execute_unknown_action(fout, unknown_action, t, "Flag not recognized");
+    execute_unknown_action(fout, unknown_action, t, "Flag not recognized1");
   else {
     update_flag(fout, flag, is_term(t, "set", 1), echo);
     if (is_term(ARG(t,0), "arithmetic", 0)) {

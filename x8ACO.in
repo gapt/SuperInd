@@ -1,0 +1,43 @@
+% Unsat OK
+% X1 * É * Xn = Xn * É X1
+%assign(max_weight, 14).
+%assign(max_seconds, 1).
+%set(raw).
+set(random_given).
+assign(max_given, 20).
+%set(print_gen).
+set(binary_resolution).
+set(back_subsume).
+set(ordered_res).
+set(paramodulation).
+set(ordered_para). 
+assign(max_literals, 5).
+assign(max_depth, 4).
+%set(back_demod). 
+assign(literal_selection, none).
+predicate_order([N,=]).
+%clear(process_initial_sos).
+
+clear(predicate_elim).
+list(kbo_weights).
+  s = 3.
+end_of_list.
+%formulas(demodulators). 
+ 
+%*(x,1)=x.
+%*(1,x)=x.   
+%end_of_list. 
+formulas(sos).
+N(x) | p(x) != q(x).
+p(s(x)) = p(x)*a(x). 
+q(s(x)) = a(x)*q(x).
+x*y = u*v | x != u | y!=v. 
+p(0) = 1.
+q(0)=1.
+*(x,1)=x.
+*(1,x)=x. 
+
+
+end_of_list.
+
+

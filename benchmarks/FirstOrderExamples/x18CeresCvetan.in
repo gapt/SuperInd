@@ -1,0 +1,79 @@
+%	============================== PROOF =================================
+%	
+%	% Proof 1 at 0.01 (+ 0.00) seconds.
+%	% Given clauses 41.
+%	
+%	% number of calls to fixpoint : 4 
+%	 S_init  : 
+%	 (15:  [ -p(f(g(v0,a))) if  n = s(v0) ].
+%	21:  [ r(v0) if  n = s(v0) ].
+%	20:  [ -p(g(v0,v1)) | p(f(g(v0,v1))) if  n = s(v0) ].
+%	34:  [ -p(g(v0,a)) if  n = s(v0) ].
+%	) 
+%	 S_loop  : 
+%	 (45:  [ -p(g(v0,a)) if  n = s(s(v0)) ].
+%	23:  [ -p(g(v0,v1)) | p(f(g(v0,v1))) if  n = s(s(v0)) ].
+%	24:  [ r(v0) if  n = s(s(v0)) ].
+%	38:  [ -p(f(g(v0,a))) if  n = s(s(v0)) ].
+%	) 
+%	 The empty clauses  : 
+%	 (17:  [  n = 0 ].
+%	33:  [  n = s(0) ].
+%	44:  [  n = s(s(0)) ].
+%	) max_rank 3 
+%	
+%	============================== end of proof ==========================
+%	
+%	============================== STATISTICS ============================
+%	
+%	Given=41. Generated=78. Kept=56. proofs=1.
+%	Usable=31. Sos=13. Demods=2. Limbo=0, Disabled=22. Hints=0.
+%	Kept_by_rule=0, Deleted_by_rule=0.
+%	Forward_subsumed=8. Back_subsumed=11.
+%	Sos_limit_deleted=0. Sos_displaced=0. Sos_removed=0.
+%	New_demodulators=2 (0 lex), Back_demodulated=1. Back_unit_deleted=0.
+%	Demod_attempts=611. Demod_rewrites=15.
+%	Res_instance_prunes=0. Para_instance_prunes=0. Basic_paramod_prunes=0.
+%	Nonunit_fsub_feature_tests=89. Nonunit_bsub_feature_tests=90.
+%	Megabytes=0.12.
+%	User_CPU=0.01, System_CPU=0.00, Wall_clock=0.
+%	
+%	============================== end of statistics =====================
+set(prolog_style_variables).
+assign(max_given, 1200).
+
+%set(raw).
+%set(lightest_first).
+%set(print_gen).
+%set(back_subsume). 
+%set(back_demod).
+%set(cac_redundancy).
+assign(max_depth, 4).
+
+%set(ordered_para). 
+%set(paramodulation).
+%set(binary_resolution).
+
+assign(literal_selection, none).
+clear(predicate_elim).
+assign(order, kbo).
+%set(cycle2).
+%predicate_order([N,p,g,r,q, =]).
+list(kbo_weights).
+ s = 10.
+end_of_list.
+
+formulas(sos).
+(r(0) & p(Z)) -> p(f(g(0,Z))).
+-q(0).
+-r(s(X)) | r(X).
+(r(s(X)) & p(g(X,Z )) ) -> p(f(g(X,Z))).
+-q(s(X)) | r(s(X)).
+p(a).
+-(q(s(X)) & p(f(g(X, a))) ).
+g(0,Z) = Z.
+g(s(X), Z) = f(g(X,Z)).
+N(X) | q(X).
+end_of_list.
+
+

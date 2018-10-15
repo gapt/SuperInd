@@ -1,0 +1,30 @@
+%assign(max_weight, 100).
+%set(random_given).
+set(prolog_style_variables).
+assign(max_given, 60).  
+%set(raw).
+%set(print_gen).
+clear(ordered_res).
+assign(literal_selection, none).
+
+%predicate_order([  N,= ]).
+clear(predicate_elim).
+%set(paramodulation).
+%clear(hyper_resolution). 
+%list(kbo_weights).
+%  s = 6.
+ % i = 3.
+%end_of_list.
+
+formulas(sos).
+t(0) =tt.
+ tp(0) = store(tt, ip, a).
+t(s(J)) = store(t(J), i(J) , e(J)).
+tp(s(J)) = store(tp(J), i(J) , e(J)).
+all J (i(J) != ip).
+select(store(T, X , V) , X ) = V.
+X = Y | select(store(T, X , V) , Y ) = select(T,Y).
+N(A)  | select(store( t(A), ip , a) , is) != select(tp(A),is) .
+end_of_list.
+
+

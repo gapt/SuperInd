@@ -1,0 +1,67 @@
+set(prolog_style_variables). 
+assign(max_given, 14000).
+%set(raw).
+set(index_flat).
+set(print_gen).
+set(superind).
+%set(cycle2).
+%set(random_loopdet).
+set(rank_given).
+%set(random_given).
+set(binary_resolution).
+set(ordered_res).
+%clear(sat).
+set(random_loopdet).
+%set(back_subsume).
+assign(order, kbo).
+clear(predicate_elim).
+list(kbo_weights).
+s = 3.
+end_of_list.
+formulas(sos).
+( ( N(X) | -$Q$(X) ) & ( N(X) | -$R$(X) )  ) & ( M1(s(0)) & ( N(X) | $S1$(X) )  ) & ( M2(s(0)) & -$M2$(s(0)) & $M2$$(s(0)) & ( N(X) | $S2$(X) )  ) & ( M3(s(0)) & $M3$(s(0)) & ( N(X) | $S3$(X) )  ) & ( -M4(s(0)) & -$M4$(s(0)) & $M4$$(s(0)) & ( N(X) | $S4$(X) )  ) & ( ( N(X) | $S5$(X) ) & -T1(s(0))  ) & ( ( N(X) | $T2$(X) ) & T2(0) & ( N(X) | $S6$(X) )  ) & ( ( N(X) | $T3$(X) ) & T3(0) & ( N(X) | $S7$(X) )  ) & ( ( ( N(X) | $T4$(X) ) & T4(0) & ( N(X) | $S8$(X) )  )  ) & ( ( ( N(X) | $T5$(X) ) & T5(0) & ( N(X) | $S9$(X) )  )  )  .  
+S1(0) <-> $T  .
+S1(s(X)) <-> ( S1(X) & -$M1$(s(X)) )  .
+S2(0) <-> $T  .
+S2(s(X)) <-> ( S2(X) & -$M2$$$(s(X)) )  .
+S3(0) <-> $T  .
+S3(s(X)) <-> ( S3(X) & -$M3$$(s(X)) )  .
+S4(0) <-> $T  .
+S4(s(X)) <-> ( S4(X) & -$M4$$$(s(X)) )  .
+S5(0) <-> $T  .
+S5(s(X)) <-> ( S5(X) & ( ( QpR(s(X)) <-> -( - (Q(s(X)) <-> R(s(X)) ) <-> T1(s(X)))  ) & ( $T1$(s(X)) <-> (Q(s(X)) & R(s(X)) | T1(s(X)) & Q(s(X)) | T1(s(X)) & R(s(X)))  ) ) )  .
+S6(0) <-> $T  .
+S6(s(X)) <-> ( S6(X) & (T2(s(X)) <-> ((M1(s(X)) <-> QpR(s(X))) & T2(X) | -M1(s(X)) & QpR(s(X)))) )  .
+S7(0) <-> $T  .
+S7(s(X)) <-> ( S7(X) & (T3(s(X)) <-> ((QpR(s(X)) <-> M2(s(X))) & T3(X) | -QpR(s(X)) & M2(s(X)))) )  .
+S8(0) <-> $T  .
+S8(s(X)) <-> ( S8(X) & (T4(s(X)) <-> ((Q(s(X)) <-> M3(s(X))) & T4(X) | -Q(s(X)) & M3(s(X)))) )  .
+S9(0) <-> $T  .
+S9(s(X)) <-> ( S9(X) & (T5(s(X)) <-> ((R(s(X)) <-> M4(s(X))) & T5(X) | -R(s(X)) & M4(s(X)))) )  .
+M1(s(X))  <->  $M1$(X)  .
+M2(s(X))  <->  $M2$(X)  .
+$M2$(s(X))  <->  $M2$$(X)  .
+$M2$$(s(X))  <->  $M2$$$(X)  .
+M3(s(X))  <->  $M3$(X)  .
+$M3$(s(X))  <->  $M3$$(X)  .
+M4(s(X))  <->  $M4$(X)  .
+$M4$(s(X))  <->  $M4$$(X)  .
+$M4$$(s(X))  <->  $M4$$$(X)  .
+T1(s(X))  <->  $T1$(X)  .
+Q(s(X))  <->  $Q$(X)  .
+R(s(X))  <->  $R$(X)  .
+S1(s(X))  <->  $S1$(X)  .
+S2(s(X))  <->  $S2$(X)  .
+S3(s(X))  <->  $S3$(X)  .
+S4(s(X))  <->  $S4$(X)  .
+S5(s(X))  <->  $S5$(X)  .
+S6(s(X))  <->  $S6$(X)  .
+S7(s(X))  <->  $S7$(X)  .
+S8(s(X))  <->  $S8$(X)  .
+S9(s(X))  <->  $S9$(X)  .
+T2(s(X))  <->  $T2$(X)  .
+T3(s(X))  <->  $T3$(X)  .
+T4(s(X))  <->  $T4$(X)  .
+T5(s(X))  <->  $T5$(X)  .
+end_of_list.
+

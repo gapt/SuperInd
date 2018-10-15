@@ -782,6 +782,8 @@ BOOL true_clause(Literals lits)
     return true_clause(lits->next);
 }  /* true_clause */
 
+
+
 /*************
  *
  *   complementary_scan()
@@ -926,14 +928,21 @@ Identical clauses, including order of literals and variable numbering.
 /* PUBLIC */
 BOOL clause_ident(Literals lits1, Literals lits2)
 {
+
   if (lits1 == NULL)
     return lits2 == NULL;
   else if (lits2 == NULL)
     return FALSE;
-  else if (lits1->sign != lits2->sign)
+  else if (lits1->sign != lits2->sign){
+	  //printf("s0 %d ", lits1->sign );
+	 // printf("s1 %d ", lits2->sign );
+	  
     return FALSE;
-  else if (!term_ident(lits1->atom, lits2->atom))
+  }else if (!term_ident(lits1->atom, lits2->atom)){
+	   
     return FALSE;
+	  
+  }
   else
     return clause_ident(lits1->next, lits2->next);
 }  /* clause_ident */
@@ -1182,3 +1191,211 @@ Ilist pos_predicates(Ilist p, Literals lits)
   return p;
 }  /* pos_predicates */
 
+/********************************MODIF************************************/
+/*************
+ *
+ *   false_clause()
+ *
+ *************/
+/* 
+ Does the clause contain a literal $T?
+ (This does not check for complementary literals, -$F, or x=x.)
+ */
+
+/* PUBLIC */
+BOOL false_clause(Literals lits)
+{
+	if (lits == NULL){
+		
+		return TRUE;
+	}
+	else if (lits->sign && false_term(lits->atom)){
+		return TRUE;
+		}
+	else {
+	
+		return FALSE;
+	}
+	
+	
+	
+}  /* false_clause */
+
+/*
+ return the parameter literal
+ */
+
+Literals param_of_topform(Literals lits){
+	Literals l, param;
+	for (l = lits; l; l = l->next) {
+		if (param_term(l->atom)) {
+			param=copy_literal(l);
+			param->next = NULL;
+			return param;	
+		}
+	}
+	
+	
+}
+
+/*************
+ *
+ *   remove_param_literals()
+ *
+ *************/
+
+/* DOCUMENTATION
+ */
+
+/* PUBLIC */
+Literals remove_param_literals(Literals l)
+{
+	if (l == NULL)
+		return NULL;
+	else {
+		l->next = remove_param_literals(l->next);
+		if (!param_term(l->atom))
+			return l;
+		else {
+			Literals m = l->next;
+			free_literals(l);
+			return m;
+		}
+	}
+}  /* remove_param_literals */
+
+/*************
+ *
+ *   count_literal()
+ *
+ *************/
+
+/* DOCUMENTATION
+ Return the number of  literal of a clause, counting from 1.
+ */
+
+/* PUBLIC */
+int count_literal(Literals lits)
+{
+	if (lits == NULL)
+		return 0;
+	else return 1 + count_literal(lits->next);
+}  /* count_literal */
+
+BOOL include(Literals lits, Literals lit){
+	//printf("k1 ");	p_term(lits->atom); p_term(lit->atom) ; printf(" k2\n");
+	if (lits == NULL) {
+		return FALSE;
+	}else {
+		if (term_ident(lits->atom, lit->atom) && (lits->sign == lit->sign)) {
+			//printf("A");
+			return TRUE;
+		}else {
+			//printf("B");
+			return include(lits->next, lit);
+		}
+
+	}
+
+}
+
+BOOL literals_ident(Literals lits1, Literals lits2)
+{//lits1->next->sign= TRUE;
+	if (lits2 == NULL) {
+		return TRUE;
+	}
+	else{
+		if (!include(lits1, ith_literal(lits2,1))){
+		
+		//printf("clause ident %d ", clause_ident(lits1->next, ith_literal(lits2,1)));
+		//printf("kk ");	p_term(lits1->next->atom); p_term(ith_literal(lits2,1)->atom) ; printf(" kk\n");
+		//printf("now  %d ", include(lits1, ith_literal(lits2,1)));
+			return FALSE;
+		}
+		else return literals_ident(lits1, lits2->next);
+	}
+	
+} 
+
+BOOL loop_literals(Literals lits){
+	if (count_literal(lits) >1) {
+		return FALSE;
+	}else {
+		if (!param_term(lits->atom))
+			return FALSE;
+		else {
+			return variable_term(lits->atom);
+		}
+
+	}
+
+}
+
+/*int depth_param(Literals l){
+	return term_depth(l->atom);
+}
+int max_depth(Literals l){
+	Literals temp;
+	return max_depth(l->Literals
+}*/
+
+/************************** *************/
+/* Retourne vrai si la clause n'a pas de parametre \alpha */
+BOOL param_free_lit(Literals l){
+	Term t;
+	Literals lit;
+	if (l==NULL) {
+		return TRUE;
+	}
+	
+	for (lit = l; lit != NULL; lit = lit->next){
+		t = lit->atom;
+		if (param_term(t)) {
+			return FALSE;
+		}
+	}
+	return TRUE;
+}
+
+/*********************/
+int compute_rank_lit(Literals l){
+	int depth_param =0;
+	int max_depth = 0;
+	BOOL N=FALSE;
+	//printf("couoooooooooooooooooo");
+	
+	if (param_free_lit(l)) {
+		
+		return -1;
+	}
+	else{
+		Literals lit;
+		Term t;
+		//printf("couoooooooooooooooooo");
+		for(lit = l; lit != NULL; lit = lit->next){
+			
+			t = lit->atom;
+			if (param_term(t)){
+				depth_param = term_depth(t);
+				
+			}
+			else{
+				if (succ_occurs_in(t)){// if "s" occurs once 
+					
+					max_depth = 1;
+				}
+			}
+			
+		}
+		
+		
+		
+		//printf(" max_depth = %d ", max_depth);
+		//p_clause(p);
+		//printf("depth_param = %d ", depth_param);
+		return depth_param - max_depth ;
+	}
+}
+/************************/
+
+//*******************************

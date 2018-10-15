@@ -1,0 +1,18 @@
+% Unsat OK
+assign(max_weight, 15).
+set(raw).
+set(superind).
+set(print_gen).
+set(binary_resolution).
+set(ordered_res).
+%clear(neg_binary_resolution).
+assign(literal_selection, none).
+%set(hyper_resolution).
+clear(predicate_elim).
+formulas(sos).
+  ( N(x) | -P(x,y) ) & (-P(x,y) | P(s(x),f(y))) & P(0,a).
+
+end_of_list.
+
+
+

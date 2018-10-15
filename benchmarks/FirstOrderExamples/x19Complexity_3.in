@@ -1,0 +1,19 @@
+% Unsat OK
+
+set(prolog_style_variables).
+%set(print_gen).
+set(binary_resolution).
+
+set(paramodulation).
+set(ordered_para).
+%clear(ordered_res).
+assign(max_given, 500).
+assign(literal_selection, none).
+formulas(sos).
+N(X) | (t(X) != f(a,Z,T) & t(X) != f(Z,a,T)  & t(X) != f(Z,T,a)).
+t(X) != f(Z,Y,T) | g(t(X)) = f(Y,T,Z).
+t(s(X)) = g(t(X)). 
+ 
+t(0) = f(a,Z,T).
+end_of_list.
+

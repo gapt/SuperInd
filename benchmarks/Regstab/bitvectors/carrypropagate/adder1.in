@@ -1,0 +1,58 @@
+% A + 0 = A
+%	============================== PROOF =================================
+%	
+%	% Proof 1 at 0.76 (+ 0.04) seconds.
+%	% Given clauses 516.
+%	
+%	% number of calls to fixpoint : 3 
+%	 S_init  : 
+%	 (49:  [ S1(v0) if  n = s(v0) ].
+%	90:  [ S2(v0) if  n = s(v0) ].
+%	866:  [ S3(v0) | $C$(v0) if  n = s(v0) ].
+%	) 
+%	 S_loop  : 
+%	 (1152:  [ $C$(v0) | S3(v0) if  n = s(s(v0)) ].
+%	1015:  [ S2(v0) if  n = s(s(v0)) ].
+%	992:  [ S1(v0) if  n = s(s(v0)) ].
+%	) 
+%	 The empty clauses  : 
+%	 (113:  [  n = 0 ].
+%	864:  [  n = s(0) ].
+%	1219:  [  n = s(s(0)) ].
+%	) max_rank 2 
+%	
+%	============================== end of proof ==========================
+%	
+
+
+assign(max_weight, 15).
+set(prolog_style_variables). 
+assign(max_given, 900).
+set(raw).
+set(back_subsume).
+set(rank_given).
+set(index_flat).
+%set(cycle1).
+set(random_loopdet).
+assign(start_rank, 1).
+%set(cycle2).
+%set(print_gen).
+set(binary_resolution).
+%clear(ordered_res).
+assign(order, kbo).
+assign(literal_selection, none).
+clear(predicate_elim).
+%list(kbo_weights).
+%s = 3.
+%end_of_list.
+formulas(sos).
+( ( N(X) | S1(X) ) & -C(s(0))  ) &  ( N(X) | S2(X) )   &  ( N(X) | S3(X) )  .  
+S1(0) <-> $T  .
+S1(s(X)) <-> ( S1(X) & ( ( S(s(X)) <-> -( - (A(s(X)) <-> B(s(X)) ) <-> C(s(X)))  ) & ( $C$(s(X)) <-> ( ( A(s(X)) & B(s(X))  ) | ( A(s(X)) | B(s(X))  ) & C(s(X)) )  ) ) )  .
+S2(0) <-> $T  .
+S2(s(X)) <-> ( S2(X) & -B(s(X)) )  .
+S3(0) <-> $F  .
+S3(s(X)) <-> ( S3(X) | -(A(s(X)) <-> S(s(X))) )  .
+C(s(X))  <->  $C$(X)  .
+
+end_of_list.

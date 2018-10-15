@@ -259,7 +259,19 @@ Topform resolve(Clash first, Just_type rule)
   }
   r->justification = resolve_just(j, rule);
   upward_clause_links(r);
-  return r;
+	/********************************* Modif ******************/
+	init_rank(r);
+	if (get_rank(nuc) != -1 && get_rank(r) > get_rank(nuc) +1 ) {
+		
+		//printf("new = %d", get_rank(r) );
+		r->rank = -2;
+		//printf("nuc = %d", get_rank(nuc) );
+		//printf("sat = %d", get_rank(sat) );
+		
+	}
+	/*........................................*/
+	
+	return r;
 }  /* resolve */
 
 /*************
@@ -270,67 +282,67 @@ Topform resolve(Clash first, Just_type rule)
 
 static
 void clash_recurse(Clash first,
-		   Clash p,
-		   BOOL (*sat_test) (Literals),
-		   Just_type rule,
-		   void (*proc_proc) (Topform))
+				   Clash p,
+				   BOOL (*sat_test) (Literals),
+				   Just_type rule,
+				   void (*proc_proc) (Topform))
 {
-  if (p == NULL) {
-    /* All clashable literals have been mated, so construct the resolvent. */
-    Topform resolvent = resolve(first, rule);
-    (*proc_proc)(resolvent);
-  }
-  else if (!p->clashable | p->clashed)
-    clash_recurse(first, p->next, sat_test, rule, proc_proc);
-  else {
-    Term fnd_atom;
-    fnd_atom = mindex_retrieve_first(p->nuc_lit->atom, p->mate_index, UNIFY,
-				     p->nuc_subst, p->sat_subst,
-				     FALSE, &(p->mate_pos));
-    while (fnd_atom != NULL) {
-      Literals slit = atom_to_literal(fnd_atom);
-      if ((*sat_test)(slit)) {
-	p->clashed = TRUE;
-	p->flipped = FALSE;
-	p->sat_lit = slit;
-	clash_recurse(first, p->next, sat_test, rule, proc_proc);
-	p->clashed = FALSE;
-      }
-      fnd_atom = mindex_retrieve_next(p->mate_pos);
-    }
-    /* If the literal is an equality, try flipping it. */
-    if (eq_term(p->nuc_lit->atom)) {
-      Term flip = top_flip(p->nuc_lit->atom);
-      fnd_atom = mindex_retrieve_first(flip, p->mate_index, UNIFY,
-				       p->nuc_subst, p->sat_subst,
-				       FALSE, &(p->mate_pos));
-      while (fnd_atom != NULL) {
-	Literals slit = atom_to_literal(fnd_atom);
-	if ((*sat_test)(slit)) {
-	  p->clashed = TRUE;
-	  p->flipped = TRUE;
-	  p->sat_lit = slit;
-	  clash_recurse(first, p->next, sat_test, rule, proc_proc);
-	  p->clashed = FALSE;
+	if (p == NULL) {
+		/* All clashable literals have been mated, so construct the resolvent. */
+		Topform resolvent = resolve(first, rule);
+		(*proc_proc)(resolvent);
 	}
-	fnd_atom = mindex_retrieve_next(p->mate_pos);
-      }
-      zap_top_flip(flip);
-    }
-    /* Built-in resolution with x=x. */
-    if (neg_eq(p->nuc_lit)) {
-      Term alpha = ARG(p->nuc_lit->atom,0);
-      Term beta  = ARG(p->nuc_lit->atom,1);
-      Trail tr = NULL;
-      if (unify(alpha, p->nuc_subst, beta, p->nuc_subst, &tr)) {
-	p->clashed = TRUE;
-	p->sat_lit = NULL;
-	clash_recurse(first, p->next, sat_test, rule, proc_proc);
-	p->clashed = FALSE;
-	undo_subst(tr);
-      }
-    }
-  }
+	else if (!p->clashable | p->clashed)
+		clash_recurse(first, p->next, sat_test, rule, proc_proc);
+	else {
+		Term fnd_atom;
+		fnd_atom = mindex_retrieve_first(p->nuc_lit->atom, p->mate_index, UNIFY,
+										 p->nuc_subst, p->sat_subst,
+										 FALSE, &(p->mate_pos));
+		while (fnd_atom != NULL) {
+			Literals slit = atom_to_literal(fnd_atom);
+			if ((*sat_test)(slit)) {
+				p->clashed = TRUE;
+				p->flipped = FALSE;
+				p->sat_lit = slit;
+				clash_recurse(first, p->next, sat_test, rule, proc_proc);
+				p->clashed = FALSE;
+			}
+			fnd_atom = mindex_retrieve_next(p->mate_pos);
+		}
+		/* If the literal is an equality, try flipping it. */
+		if (eq_term(p->nuc_lit->atom)) {
+			Term flip = top_flip(p->nuc_lit->atom);
+			fnd_atom = mindex_retrieve_first(flip, p->mate_index, UNIFY,
+											 p->nuc_subst, p->sat_subst,
+											 FALSE, &(p->mate_pos));
+			while (fnd_atom != NULL) {
+				Literals slit = atom_to_literal(fnd_atom);
+				if ((*sat_test)(slit)) {
+					p->clashed = TRUE;
+					p->flipped = TRUE;
+					p->sat_lit = slit;
+					clash_recurse(first, p->next, sat_test, rule, proc_proc);
+					p->clashed = FALSE;
+				}
+				fnd_atom = mindex_retrieve_next(p->mate_pos);
+			}
+			zap_top_flip(flip);
+		}
+		/* Built-in resolution with x=x. */
+		if (neg_eq(p->nuc_lit)) {
+			Term alpha = ARG(p->nuc_lit->atom,0);
+			Term beta  = ARG(p->nuc_lit->atom,1);
+			Trail tr = NULL;
+			if (unify(alpha, p->nuc_subst, beta, p->nuc_subst, &tr)) {
+				p->clashed = TRUE;
+				p->sat_lit = NULL;
+				clash_recurse(first, p->next, sat_test, rule, proc_proc);
+				p->clashed = FALSE;
+				undo_subst(tr);
+			}
+		}
+	}
 }  /* clash_recurse */
 
 /*************

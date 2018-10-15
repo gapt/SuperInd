@@ -1,0 +1,64 @@
+%	============================== PROOF =================================
+%	
+%	% Proof 1 at 0.01 (+ 0.00) seconds.
+%	% Given clauses 16.
+%	
+%	% number of calls to fixpoint : 1 
+%	 S_init  : 
+%	 (5:  [ -H(v0,v0) if  n = v0 ].
+%	) 
+%	 S_loop  : 
+%	 (12:  [ -H(v0,v0) if  n = s(v0) ].
+%	) 
+%	 The empty clauses  : 
+%	 (11:  [  n = 0 ].
+%	14:  [  n = s(0) ].
+%	) max_rank 3 
+%	
+%	============================== end of proof ==========================
+%	
+%	============================== STATISTICS ============================
+%	
+%	Given=16. Generated=23. Kept=20. proofs=1.
+%	Usable=16. Sos=4. Demods=0. Limbo=0, Disabled=5. Hints=0.
+%	Kept_by_rule=0, Deleted_by_rule=0.
+%	Forward_subsumed=3. Back_subsumed=0.
+%	Sos_limit_deleted=0. Sos_displaced=0. Sos_removed=0.
+%	New_demodulators=0 (0 lex), Back_demodulated=0. Back_unit_deleted=0.
+%	Demod_attempts=0. Demod_rewrites=0.
+%	Res_instance_prunes=0. Para_instance_prunes=0. Basic_paramod_prunes=0.
+%	Nonunit_fsub_feature_tests=17. Nonunit_bsub_feature_tests=12.
+%	Megabytes=0.05.
+%	User_CPU=0.01, System_CPU=0.00, Wall_clock=0.
+%	
+%	============================== end of statistics =====================
+%	
+%	============================== end of search =========================
+
+
+%Simple example from Spass-FD
+set(prolog_style_variables). 
+assign(max_given, 2300).
+set(raw).
+set(index_flat).
+%set(print_gen).
+set(superind).
+%set(cycle2).
+set(rank_given).
+set(binary_resolution).
+set(ordered_res).
+set(back_subsume).
+assign(order, kbo).
+clear(predicate_elim).
+list(kbo_weights).
+s = 3.
+end_of_list.
+
+formulas(sos).
+
+G(s(0), 0).
+G(X,Y) -> G(s(X),s(Y)).
+N(X) | -H(X,X).
+H(X,Y) <-> G(s(X),Y).
+
+end_of_list.

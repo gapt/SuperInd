@@ -1,0 +1,98 @@
+% 3+4=7
+%	============================== PROOF =================================
+%	
+%	% Proof 1 at 1.06 (+ 0.07) seconds.
+%	% Given clauses 2572.
+%	
+%	% number of calls to fixpoint : 10 
+%	 S_init  : 
+%	 (646:  [ S1(v0) if  n = s(s(s(v0))) ].
+%	647:  [ S2(v0) if  n = s(s(s(v0))) ].
+%	648:  [ S3(v0) if  n = s(s(s(v0))) ].
+%	649:  [ S4(v0) if  n = s(s(s(v0))) ].
+%	2266:  [ -$B$$(v0) | $A$$$(v0) | $SP$$$(v0) | -$SP$$(v0) | $B$$$(v0) | $A$$(v0) | -$SP$(v0) | S5(v0) | $C$(v0) | $B$(v0) | -$A$(v0) if  n = s(s(s(v0))) ].
+%	2272:  [ $B$$(v0) | $A$$$(v0) | $SP$$$(v0) | $SP$$(v0) | $B$$$(v0) | $A$$(v0) | -$SP$(v0) | S5(v0) | $C$(v0) | -$B$(v0) | $A$(v0) if  n = s(s(s(v0))) ].
+%	2273:  [ $B$$(v0) | $A$$$(v0) | $SP$$$(v0) | $SP$$(v0) | $B$$$(v0) | $A$$(v0) | $SP$(v0) | S5(v0) | $C$(v0) | $B$(v0) | $A$(v0) if  n = s(s(s(v0))) ].
+%	) 
+%	 S_loop  : 
+%	 (3433:  [ $B$$(v0) | $A$$$(v0) | $SP$$$(v0) | $SP$$(v0) | $B$$$(v0) | $A$$(v0) | $SP$(v0) | S5(v0) | $C$(v0) | $B$(v0) | $A$(v0) if  n = s(s(s(s(v0)))) ].
+%	3432:  [ $B$$(v0) | $A$$$(v0) | $SP$$$(v0) | $SP$$(v0) | $B$$$(v0) | $A$$(v0) | -$SP$(v0) | S5(v0) | $C$(v0) | -$B$(v0) | $A$(v0) if  n = s(s(s(s(v0)))) ].
+%	3426:  [ -$B$$(v0) | $A$$$(v0) | $SP$$$(v0) | -$SP$$(v0) | $B$$$(v0) | $A$$(v0) | -$SP$(v0) | S5(v0) | $C$(v0) | $B$(v0) | -$A$(v0) if  n = s(s(s(s(v0)))) ].
+%	2342:  [ S4(v0) if  n = s(s(s(s(v0)))) ].
+%	2341:  [ S3(v0) if  n = s(s(s(s(v0)))) ].
+%	2340:  [ S2(v0) if  n = s(s(s(s(v0)))) ].
+%	2339:  [ S1(v0) if  n = s(s(s(s(v0)))) ].
+%	) 
+%	 The empty clauses  : 
+%	 (103:  [  n = 0 ].
+%	192:  [  n = s(0) ].
+%	698:  [  n = s(s(0)) ].
+%	2407:  [  n = s(s(s(0))) ].
+%	3438:  [  n = s(s(s(s(0)))) ].
+%	) max_rank 4 
+%	
+%	============================== end of proof ==========================
+%	
+%	============================== STATISTICS ============================
+%	
+%	Given=2572. Generated=102397. Kept=3418. proofs=1.
+%	Usable=1905. Sos=33. Demods=0. Limbo=0, Disabled=1557. Hints=0.
+%	Kept_by_rule=0, Deleted_by_rule=0.
+%	Forward_subsumed=97107. Back_subsumed=1480.
+%	Sos_limit_deleted=0. Sos_displaced=0. Sos_removed=0.
+%	New_demodulators=0 (0 lex), Back_demodulated=0. Back_unit_deleted=0.
+%	Demod_attempts=0. Demod_rewrites=0.
+%	Res_instance_prunes=0. Para_instance_prunes=0. Basic_paramod_prunes=0.
+%	Nonunit_fsub_feature_tests=23473. Nonunit_bsub_feature_tests=5015.
+%	Megabytes=7.99.
+%	User_CPU=1.06, System_CPU=0.07, Wall_clock=1.
+%	
+%	============================== end of statistics =====================
+%	
+%	============================== end of search =========================
+
+set(prolog_style_variables). 
+assign(max_given, 6000).
+set(raw).
+set(index_flat).
+%set(print_gen).
+set(superind).
+set(cycle2).
+%set(random_loopdet).
+%clear(sat).
+%assign(start_rank, 3).
+set(rank_given).
+set(binary_resolution).
+set(ordered_res).
+set(back_subsume).
+assign(order, kbo).
+%assign(literal_selection, all_negative).
+clear(predicate_elim).
+list(kbo_weights).
+s = 3.
+end_of_list.
+
+formulas(sos).
+( ( N(X) | S1(X) ) & -C(s(0))  ) & ( A(s(0)) & $A$(s(0)) & -$A$$(s(0)) & ( N(X) | S2(X) )  ) & ( -B(s(0)) & -$B$(s(0)) & $B$$(s(0)) & ( N(X) | S3(X) )  ) & ( SP(s(0)) & $SP$(s(0)) & $SP$$(s(0)) & ( N(X) | S4(X) )  ) & ( ( N(X) | S5(X) )  )  .  
+S1(0) <-> $T  .
+S1(s(X)) <-> ( S1(X) & ( ( S(s(X)) <-> -( - (A(s(X)) <-> B(s(X)) ) <-> C(s(X)))  ) & ( $C$(s(X)) <-> (A(s(X)) & B(s(X)) | C(s(X)) & A(s(X)) | C(s(X)) & B(s(X)))  ) ) )  .
+S2(0) <-> $T  .
+S2(s(X)) <-> ( S2(X) & -$A$$$(s(X)) )  .
+S3(0) <-> $T  .
+S3(s(X)) <-> ( S3(X) & -$B$$$(s(X)) )  .
+S4(0) <-> $T  .
+S4(s(X)) <-> ( S4(X) & -$SP$$$(s(X)) )  .
+S5(0) <-> $F  .
+S5(s(X)) <-> ( S5(X) | - (S(s(X)) <-> SP(s(X))) )  .
+C(s(X))  <->  $C$(X)  .
+A(s(X))  <->  $A$(X)  .
+$A$(s(X))  <->  $A$$(X)  .
+$A$$(s(X))  <->  $A$$$(X)  .
+B(s(X))  <->  $B$(X)  .
+$B$(s(X))  <->  $B$$(X)  .
+$B$$(s(X))  <->  $B$$$(X)  .
+SP(s(X))  <->  $SP$(X)  .
+$SP$(s(X))  <->  $SP$$(X)  .
+$SP$$(s(X))  <->  $SP$$$(X)  .
+
+end_of_list.

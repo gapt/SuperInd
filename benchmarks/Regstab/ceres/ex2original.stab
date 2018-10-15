@@ -1,0 +1,24 @@
+// Example 2 coming from Ceres
+//expected: unsat
+
+let CS0    := 
+  (Cl0phi_0 -> Cl1psi_0) /\
+  (Cl0phi_0 -> Cl2chi_0) /\
+  (Cl1Phi_0 -> A_0) /\
+  (Cl1psi_0 -> Cl1Phi_0) /\
+  (Cl1psi_0 -> (Cl0chi_1 \/ A_1)) /\
+  ~Cl0chi_0 /\
+  (~Cl2chi_0 \/ ~A_0)
+in
+let CS1(k) := 
+  (Cl0phi_k+1 -> Cl1psi_k+1) /\
+  (Cl0phi_k+1 -> Cl2chi_k+2) /\
+  (Cl1Phi_k+1 -> Cl1Phi_k) /\
+  (Cl1Phi_k+1 -> A_k+1) /\
+  (Cl1psi_k+1 -> Cl1Phi_k+1) /\
+  (Cl1psi_k+1 -> (Cl0chi_k+1 \/ A_k+2)) /\
+  (Cl2chi_k+1 /\ A_k+1 -> Cl2chi_k) /\
+  (Cl0chi_k+1 -> Cl0chi_k)
+in
+
+Cl0phi_n /\ CS0() /\ /\k=0..n CS1(k) | n>=0

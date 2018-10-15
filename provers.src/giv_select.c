@@ -25,7 +25,8 @@
 
 enum { GS_ORDER_WEIGHT,
        GS_ORDER_AGE,
-       GS_ORDER_RANDOM
+       GS_ORDER_RANDOM,
+	   GS_ORDER_RANK
 };  /* order */
 
 typedef struct giv_select *Giv_select;
@@ -121,65 +122,77 @@ int current_cycle_size(Select_state s)
  *************/
 
 /* DOCUMENTATION
+ Initialize 
 */
 
 /* PUBLIC */
 void init_giv_select(Plist rules)
 {
-  Plist p;
-
-  for (p = rules; p; p = p->next) {
-    Term t = p->v;
-    int n = 0;
-    Term order_term;
-    Term property_term;
-    Giv_select gs;
-    if (!is_term(t, "=", 2) ||
-	!is_term(ARG(t,0), "part", 4) ||
-	!CONSTANT(ARG(ARG(t,0),0)) ||
-	!(is_constant(ARG(ARG(t,0),1), "high") ||
-	  is_constant(ARG(ARG(t,0),1), "low")) ||
-	!((n = natural_constant_term(ARG(t,1))) > 0))
-      fatal_error("Given selection rule must be: "
-		  "part(<name>,high|low,age|wt|random,<property>)=<n>");
-
-    order_term = ARG(ARG(t,0),2);
-    property_term = ARG(ARG(t,0),3);
-    gs = get_giv_select();
-    
-    if (is_constant(ARG(ARG(t,0),1), "high")) {
-      High.selectors = plist_append(High.selectors, gs);
-      High.cycle_size += n;
-    }
-    else {
-      Low.selectors  = plist_append(Low.selectors,  gs);
-      Low.cycle_size += n;
-    }
-
-    gs->name = term_symbol(ARG(ARG(t,0),0));
-    gs->part = n;
-    if (is_constant(order_term,"weight")) {
-      gs->order = GS_ORDER_WEIGHT;
-      gs->compare = (Ordertype (*) (void *, void *)) cl_wt_id_compare;
-    }
-    else if (is_constant(order_term,"age")) {
-      gs->order = GS_ORDER_AGE;
-      gs->compare = (Ordertype (*) (void *, void *)) cl_id_compare;
-    }
-    else if (is_constant(order_term,"random")) {
-      gs->order = GS_ORDER_RANDOM;
-      gs->compare = (Ordertype (*) (void *, void *)) cl_id_compare;
-    }
-    else
-      fatal_error("Given selection order must be weight, age, or random.");
-    gs->property = compile_clause_eval_rule(property_term);
-    if (gs->property == NULL)
-      fatal_error("Error in clause-property expression of given selection rule");
-    else if (rule_contains_semantics(gs->property))
-      Rule_needs_semantics = TRUE;
-  }
-  High.current = High.selectors;
-  Low.current = Low.selectors;
+	Plist p;
+	
+	for (p = rules; p; p = p->next) {
+		Term t = p->v;
+		int n = 0;
+		Term order_term;
+		Term property_term;
+		Giv_select gs;
+		if (!is_term(t, "=", 2) ||
+			!is_term(ARG(t,0), "part", 4) ||
+			!CONSTANT(ARG(ARG(t,0),0)) ||
+			!(is_constant(ARG(ARG(t,0),1), "high") ||
+			  is_constant(ARG(ARG(t,0),1), "low")) ||
+			!((n = natural_constant_term(ARG(t,1))) > 0))
+			fatal_error("Given selection rule must be: "
+						"part(<name>,high|low,age|wt|random,<property>)=<n>");
+		
+		order_term = ARG(ARG(t,0),2);
+		property_term = ARG(ARG(t,0),3);
+		gs = get_giv_select();
+		
+		if (is_constant(ARG(ARG(t,0),1), "high")) {
+			High.selectors = plist_append(High.selectors, gs);
+			High.cycle_size += n;
+		}
+		else {
+			Low.selectors  = plist_append(Low.selectors,  gs);
+			Low.cycle_size += n;
+		}
+		
+		gs->name = term_symbol(ARG(ARG(t,0),0));
+		gs->part = n;
+		if (is_constant(order_term,"weight")) {
+			gs->order = GS_ORDER_WEIGHT;
+			printf("W");
+			gs->compare = (Ordertype (*) (void *, void *)) cl_wt_id_compare;
+		}
+		else if (is_constant(order_term,"age")) {
+			gs->order = GS_ORDER_AGE;
+			
+			gs->compare = (Ordertype (*) (void *, void *)) cl_id_compare;
+		}
+		else if (is_constant(order_term,"random")) {
+			gs->order = GS_ORDER_RANDOM;
+			gs->compare = (Ordertype (*) (void *, void *)) cl_id_compare;
+			//Modif 
+			
+		}
+		//********* Modif
+		else if (is_constant(order_term,"rank")) {
+			gs->order = GS_ORDER_RANK;
+			
+			gs->compare = (Ordertype (*) (void *, void *)) cl_rank_compare; // cl_rank_compare sorts a list of topform by rank
+		}
+		//******* End Modif
+		else
+			fatal_error("Given selection order must be weight, age, or random.");
+		gs->property = compile_clause_eval_rule(property_term);
+		if (gs->property == NULL)
+			fatal_error("Error in clause-property expression of given selection rule");
+		else if (rule_contains_semantics(gs->property))
+			Rule_needs_semantics = TRUE;
+	}
+	High.current = High.selectors;
+	Low.current = Low.selectors;
 }  /* init_giv_select */
 
 /*************
@@ -191,54 +204,155 @@ void init_giv_select(Plist rules)
 static
 void update_selectors(Topform c, BOOL insert)
 {
-  BOOL matched = FALSE;
-  Plist p;
-  for (p = High.selectors; p; p = p->next) {
-    Giv_select gs = p->v;
-    if (eval_clause_in_rule(c, gs->property)) {
-      matched = TRUE;
-      if (insert) {
-	gs->idx = avl_insert(gs->idx, c, gs->compare);
-	High.occurrences++;
-      }
-      else {
-	gs->idx = avl_delete(gs->idx, c, gs->compare);
-	High.occurrences--;
-      }
-    }
-  }
-  /* If it is high-priority, don't let it also be low priority. */
-  if (!matched) {
-    for (p = Low.selectors; p; p = p->next) {
-      Giv_select gs = p->v;
-      if (eval_clause_in_rule(c, gs->property)) {
-	matched = TRUE;
-	if (insert) {
-	  gs->idx = avl_insert(gs->idx, c, gs->compare);
-	  Low.occurrences++;
+	BOOL matched = FALSE;
+	Plist p;
+	for (p = High.selectors; p; p = p->next) {
+		Giv_select gs = p->v;
+		if (eval_clause_in_rule(c, gs->property)) {
+			matched = TRUE;
+			if (insert) {
+				//Modif
+				//printf(" insert ");
+				//p_clause(c);
+				gs->idx = avl_insert(gs->idx, c, gs->compare);
+				High.occurrences++;
+			}
+			else {
+				//Modif
+				//printf(" yeah3 ");
+				//p_clause(c);
+				
+				gs->idx = avl_delete(gs->idx, c, gs->compare);
+				High.occurrences--;
+			}
+		}
 	}
-	else {
-	  gs->idx = avl_delete(gs->idx, c, gs->compare);
-	  Low.occurrences--;
+	/* If it is high-priority, don't let it also be low priority. */
+	if (!matched) {
+		for (p = Low.selectors; p; p = p->next) {
+			Giv_select gs = p->v;
+			if (eval_clause_in_rule(c, gs->property)) {
+				matched = TRUE;
+				if (insert) {
+					//Modif
+					//printf(" insert2 ");
+					//p_clause(c);
+					
+					gs->idx = avl_insert(gs->idx, c, gs->compare);
+					Low.occurrences++;
+				}
+				else {
+					//Modif
+					//printf("yeah2");
+					//p_clause(c);
+					
+					gs->idx = avl_delete(gs->idx, c, gs->compare);
+					Low.occurrences--;
+				}
+			}
+		}
 	}
-      }
-    }
-  }
-  if (!matched) {
-    static BOOL Already_warned = FALSE;
-
-    if (!Already_warned) {
-      fprintf(stderr, "\n\nWARNING: one or more kept clauses do not match "
-	     "any given_selection rules (see output).\n\n");
-      printf("\nWARNING: the following clause does not match "
-	     "any given_selection rules.\n"
-	     "This message will not be repeated.\n");
-      f_clause(c);
-      Already_warned = TRUE;
-    }
-  }
+	if (!matched) {
+		static BOOL Already_warned = FALSE;
+		
+		if (!Already_warned) {
+			fprintf(stderr, "\n\nWARNING: one or more kept clauses do not match "
+					"any given_selection rules (see output).\n\n");
+			printf("\nWARNING: the following clause does not match "
+				   "any given_selection rules.\n"
+				   "This message will not be repeated.\n");
+			f_clause(c);
+			Already_warned = TRUE;
+		}
+	}
 }  /* update_selectors */
+/*********************************************************************** Modif **************/
+/*************
+ *
+ *   update_selectors2()
+ *
+ *************/
+/*
+ In case of ordering by rank we have to considere the case of bottom 
+ 
+ */
+static
+void update_selectors2(Topform c, BOOL insert, int max_rank)
+{
+	BOOL matched = FALSE;
+	Plist p;
+	for (p = High.selectors; p; p = p->next) {
+		Giv_select gs = p->v;
+		if (eval_clause_in_rule(c, gs->property)) {
+			matched = TRUE;
+			if (insert) {
+				gs->idx = avl_insert(gs->idx, c, gs->compare);
+				High.occurrences++;
+			}
+			else {
+				
+				gs->idx = avl_delete(gs->idx, c, gs->compare);
+				High.occurrences--;
+			}
+		}
+	}
+	/* If it is high-priority, don't let it also be low priority. */
+	if (!matched) {
+		for (p = Low.selectors; p; p = p->next) {
+			Giv_select gs = p->v;
+			if (eval_clause_in_rule(c, gs->property)) {
+				matched = TRUE;
+				if (insert) {
+					gs->idx = avl_insert(gs->idx, c, gs->compare);
+					Low.occurrences++;
+				}
+				else {
+					//Modif
+					//printf("yeah");
+					//p_clause(c);
+					gs->idx = avl_delete(gs->idx, c, gs->compare);
+					Low.occurrences--;
+				}
+			}
+		}
+	}
+	if (!matched) {
+		static BOOL Already_warned = FALSE;
+		
+		if (!Already_warned) {
+			fprintf(stderr, "\n\nWARNING: one or more kept clauses do not match "
+					"any given_selection rules (see output).\n\n");
+			printf("\nWARNING: the following clause does not match "
+				   "any given_selection rules.\n"
+				   "This message will not be repeated.\n");
+			f_clause(c);
+			Already_warned = TRUE;
+		}
+	}
+}  /* update_selectors2 */
 
+/*************
+ *
+ *   insert_into_sos3()
+ *
+ *************/
+
+/* DOCUMENTATION
+ This routine appends a clause to the sos list and updates
+ the (private) index for extracting sos clauses.
+ */
+
+/* PUBLIC */
+void insert_into_sos3(Topform c, Clist sos, int max_rank)
+{
+	if (Rule_needs_semantics)
+		set_semantics(c);  /* in case not yet evaluated */
+	
+	update_selectors2(c, TRUE,max_rank);
+	clist_append(c, sos);
+	Sos_size++;
+}  /* insert_into_sos2 */
+/*..............................................................................*/
 /*************
  *
  *   insert_into_sos2()
@@ -324,6 +438,7 @@ Giv_select next_selector(Select_state s)
 /* PUBLIC */
 BOOL givens_available(void)
 {
+
   return (High.occurrences > 0 || Low.occurrences > 0);
 }  /* givens_available */
 
@@ -338,28 +453,32 @@ BOOL givens_available(void)
 
 /* PUBLIC */
 Topform get_given_clause2(Clist sos, int num_given,
-			 Prover_options opt, char **type)
+						  Prover_options opt, char **type)
 {
-  Topform giv;
-  Giv_select gs = next_selector(&High);
-  if (gs == NULL)
-    gs = next_selector(&Low);
-  if (gs == NULL)
-    return NULL;  /* no clauses are available */
-    
-  if (gs->order == GS_ORDER_RANDOM) {
-    int n = avl_size(gs->idx);
-    int i = (rand() % n) + 1;
-    giv = avl_nth_item(gs->idx, i);
-  }
-  else
-    giv = avl_smallest(gs->idx);
-
-  *type = gs->name;
-  gs->selected += 1;
-
-  remove_from_sos2(giv, sos);
-  return giv;
+	Topform giv;
+	Giv_select gs = next_selector(&High);
+	if (gs == NULL)
+		gs = next_selector(&Low);
+	if (gs == NULL)
+		return NULL;  /* no clauses are available */
+	//Modif
+	//if (gs->order == GS_ORDER_RANK) 
+	//	giv = avl_largest(gs->idx);
+	//********* End Modif *******  
+	else if (gs->order == GS_ORDER_RANDOM) {
+		int n = avl_size(gs->idx);
+		int i = (rand() % n) + 1;
+		giv = avl_nth_item(gs->idx, i);
+		//
+	}
+	else
+		giv = avl_smallest(gs->idx);
+	
+	*type = gs->name;
+	gs->selected += 1;
+	
+	remove_from_sos2(giv, sos);
+	return giv;
 }  /* get_given_clause2 */
 
 /*************
@@ -657,43 +776,48 @@ Term selector_rule_term(char *name, char *priority,
 /* PUBLIC */
 Plist selector_rules_from_options(Prover_options opt)
 {
-  Plist p = NULL;
-
-  if (flag(opt->input_sos_first)) {
-    p = plist_append(p, selector_rule_term("I", "high", "age",
-					   "initial", INT_MAX));
-  }
-
-  if (parm(opt->hints_part) == INT_MAX) {
-    p = plist_append(p, selector_rule_term("H", "high", "weight",
-					   "hint", 1));
-  }
-  else if (parm(opt->hints_part) > 0) {
-    p = plist_append(p, selector_rule_term("H", "low", "weight",
-					   "hint", parm(opt->hints_part)));
-  }
-
-  if (parm(opt->age_part) > 0) {
-    p = plist_append(p, selector_rule_term("A", "low", "age",
-					   "all", parm(opt->age_part)));
-  }
-  if (parm(opt->false_part) > 0) {
-    p = plist_append(p, selector_rule_term("F", "low", "weight",
-					   "false", parm(opt->false_part)));
-  }
-  if (parm(opt->true_part) > 0) {
-    p = plist_append(p, selector_rule_term("T", "low", "weight",
-					   "true", parm(opt->true_part)));
-  }
-  if (parm(opt->weight_part) > 0) {
-    p = plist_append(p, selector_rule_term("W", "low", "weight",
-					   "all", parm(opt->weight_part)));
-  }
-  if (parm(opt->random_part) > 0) {
-    p = plist_append(p, selector_rule_term("R", "low", "random",
-					   "all", parm(opt->random_part)));
-  }
-
+	Plist p = NULL;
+	
+	if (flag(opt->input_sos_first)) {
+		p = plist_append(p, selector_rule_term("I", "high", "age",
+											   "initial", INT_MAX));
+	}
+	
+	if (parm(opt->hints_part) == INT_MAX) {
+		p = plist_append(p, selector_rule_term("H", "high", "weight",
+											   "hint", 1));
+	}
+	else if (parm(opt->hints_part) > 0) {
+		p = plist_append(p, selector_rule_term("H", "low", "weight",
+											   "hint", parm(opt->hints_part)));
+	}
+	
+	if (parm(opt->age_part) > 0) {
+		p = plist_append(p, selector_rule_term("A", "low", "age",
+											   "all", parm(opt->age_part)));
+	}
+	if (parm(opt->false_part) > 0) {
+		p = plist_append(p, selector_rule_term("F", "low", "weight",
+											   "false", parm(opt->false_part)));
+	}
+	if (parm(opt->true_part) > 0) {
+		p = plist_append(p, selector_rule_term("T", "low", "weight",
+											   "true", parm(opt->true_part)));
+	}
+	if (parm(opt->weight_part) > 0) {
+		p = plist_append(p, selector_rule_term("W", "low", "weight",
+											   "all", parm(opt->weight_part)));
+	}
+	if (parm(opt->random_part) > 0) {
+		p = plist_append(p, selector_rule_term("R", "low", "random",
+											   "all", parm(opt->random_part)));
+	}
+	//*************** Modif
+	if (parm(opt->rank_part) > 0) {
+		p = plist_append(p, selector_rule_term("K", "low", "rank",
+											   "all", parm(opt->rank_part)));
+	}
+	// *********** End Modif
   return p;
 }  /* selector_rules_from_options */
 

@@ -20,6 +20,7 @@
 #define TP_SEARCH_STRUCTURES_H
 
 #include "../ladr/ladr.h"
+//#include "../ladr/loop.h"
 
 // Attributes
 
@@ -105,6 +106,7 @@ struct prover_options {
     lightest_first,
     default_parts,
     random_given,
+	rank_given,				//Modif 
     breadth_first_hints,
 
     automatic,             // auto is a reserved symbol in C!
@@ -116,7 +118,13 @@ struct prover_options {
     auto2,                 // enhanced auto mode
     raw,
     production,
-
+	
+	superind,		// Modif launch superind
+	sat,			// Detect satisfiability 
+	cycle1,			//Modif : launch cycle1 flag
+	cycle2,			//Modif : launch cycle2 flag
+	index_flat,			// Modif : use only index_flat clauses
+	random_loopdet,   //Modif : use a random loop detection
     lex_order_vars,       // others
     ignore_option_dependencies;
     
@@ -145,6 +153,8 @@ struct prover_options {
     true_part,
     false_part,
     random_part,
+	rank_part,   //Modif
+	start_rank, //Modif
     random_seed,
     eval_limit,
     eval_var_limit,

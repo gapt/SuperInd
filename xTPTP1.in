@@ -1,0 +1,28 @@
+% Unsat OK
+assign(max_weight, 100).
+%assign(max_seconds, 1).
+set(raw).
+set(binary_resolution).
+%clear(auto_inference).
+set(prolog_style_variables).
+set(print_gen).
+%clear(ordered_res).
+assign(max_given, 30).
+clear(predicate_elim).
+%              p(0*).                  p[0]
+%              p(x*01*) -> p(x*10*).   p[i] -> p[i + 1]
+%              not p(1*).              not p[2^n - 1]
+
+list(kbo_weights).
+ s = 3.
+end_of_list.
+formulas(sos).
+N(X) | -p(som(X)) .
+p(0).
+-p(X) | p(s(X)).
+p(som(0)) .
+p(som(s(X))) <-> p((2 * som(X)) + 1).
+
+
+end_of_list.
+

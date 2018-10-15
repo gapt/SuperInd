@@ -1,0 +1,22 @@
+% UNSAT OK
+assign(max_weight, 100).
+set(prolog_style_variables).
+set(raw).
+set(binary_resolution).
+assign(order, kbo).
+assign(literal_selection, none).
+clear(predicate_elim).
+list(kbo_weights).
+  s = 3.
+end_of_list.
+
+formulas(sos).
+p(0).
+-p(X) | q(X).
+-q(X) | -q(s(X)).
+q(X) | q(s(X)).
+N(X) |-q(X).
+N(X) | -q(s(X)).
+end_of_list.
+
+

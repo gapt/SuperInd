@@ -17,7 +17,7 @@
 */
 
 #include "glist.h"
-
+#include "topform.c"
 /*
  * memory management
  */
@@ -543,16 +543,22 @@ Remove the first occurrence of a pointer from a Plist.
 /* PUBLIC */
 Plist plist_remove(Plist p, void *v)
 {
-  if (p == NULL)
-    fatal_error("plist_remove: pointer not found");
+	
+  if (p == NULL){ 
+	 
+	  fatal_error("plist_remove: pointer not found");
+	  
+  }
 
   if (p->v == v) {
+	   
     Plist x = p;
     p = p->next;
     free_plist(x);
     return p;
   }
   else {
+	   
     p->next = plist_remove(p->next, v);
     return p;
   }
@@ -2017,3 +2023,127 @@ int multiset_occurrences(I2list m, int i)
   return (a == NULL ? 0 : a->j);
 }  /* multiset_occurrences */
 
+/********************************** MODIF  .......*/
+BOOL isEmpty(Plist p){
+	return (p == NULL);
+}
+
+/* PUBLIC */
+void p_plist_param(Plist p)
+{
+	printf( "(");
+	for (; p != NULL; p = p->next) {
+		Topform t=(Topform)p->v;
+		p_clause_param(t);
+	}
+	printf(") ");
+	
+}  /* fprint_ilist */
+
+/* DOCUMENTATION
+ The list of integers is printed to FILE *fp like this: (4 5 1 3),
+ without a newline.
+ */
+
+/* PUBLIC */
+void p_plist(Plist p)
+{
+	printf( "(");
+	for (; p != NULL; p = p->next) {
+		Topform t=(Topform)p->v;
+		p_clause(t);
+			}
+	printf(") ");
+	
+}  /* fprint_ilist */
+
+/*.........................*/
+Plist plist_remove_clause(Plist p, void *v)
+{
+	//
+	if (p == NULL){ 
+		return NULL;
+		//fatal_error("plist_remove_clause: remove from empty plist");
+		
+	}
+	Topform v1 =p->v;
+	Topform v2 = (Topform)v;
+	if (clause_ident_order(v1, v2)) {
+		
+		Plist x = p;
+		p = p->next;
+		free_plist(x);
+		return p;
+	}
+	else {
+		
+		p->next = plist_remove_clause(p->next, v);
+		return p;
+	}
+}
+/********************/
+Plist plist_remove_plist(Plist lst, Plist q){
+	if (lst == NULL) {
+		fatal_error("plist_remove_plist: remove from empty plist");
+	}
+	Plist p,res;
+	res=lst;
+	if(q == NULL)
+		return lst;
+	for (p = q; p; p = p->next){
+		res = plist_remove_clause(res, p->v);
+		
+	}
+	return res;
+}
+/* PUBLIC */
+/*return True if a Plist lst contains a topform u*/ 
+BOOL plist_member_clause(Plist lst, void *u)
+{
+	if (lst == NULL)
+		return FALSE;
+	else{ 
+		Topform v1 =lst->v;
+		Topform v2 = (Topform)u;
+		/*if(get_rank(v1) == 1){
+		printf("Begin");
+		p_clause(v2);
+		p_clause(v1);
+		}*/
+		if (clause_ident_order(v1, v2)){
+			//printf(" egal ");
+			
+			return TRUE;
+		}
+		else{
+			//printf(" pasegal ");
+
+			return plist_member_clause(lst->next, v2);
+		}
+	}
+}  /* plist_member_clause */
+/* PUBLIC */
+/*return True if a Plist lst contains a Plist small*/ 
+BOOL plist_member_plist(Plist big, Plist small)
+{
+	if (big == NULL)
+		return FALSE;
+	else{ 
+		if(small == NULL){
+			return TRUE;
+		}
+		else{
+			
+			if (!plist_member_clause(big, small->v)){
+				//printf(" egal ");
+				return FALSE;
+			}
+			else{
+				//p_clause(small->v);
+				//printf(" pasegal ");
+				
+				return plist_member_plist(big, small->next);
+			}
+		}
+	} 
+}/* plist_member_plist */

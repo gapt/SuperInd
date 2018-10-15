@@ -1,0 +1,30 @@
+set(prolog_style_variables). 
+assign(max_given, 20).
+%set(raw).
+
+set(index_flat).
+set(print_gen).
+set(superind).
+set(cycle2).
+set(random_given).
+set(binary_resolution).
+set(ordered_res).
+set(back_subsume).
+assign(order, kbo).
+%assign(literal_selection, all_negative).
+clear(predicate_elim).
+list(kbo_weights).
+s = 3.
+end_of_list.
+
+
+formulas(sos).
+S(0) = 1.
+S(s(X)) = c * S(X) .
+c < 1.
+-(c < 0 ).
+( (c < 1) & -(X = 0)) -> c * X < X.
+-(Y < 0) -> -(Y * X < 0).
+(C < B & X < Y)  -> C * X < B * Y. 
+N(X) | -(X < n0(X)) & -(S(X) < 0 ).  
+end_of_list.

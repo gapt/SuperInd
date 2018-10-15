@@ -1,0 +1,8 @@
+// Prove that A+0=A with a ripple-carry adder
+//expected: unsat
+/\i=1..n ((S_i <-> (A_i (+) B_i (+) C_i)) /\ (C_i+1 <-> (A_i /\ B_i \/ C_i /\ A_i \/ C_i /\ B_i)))
+/\ ~C_1
+/\ /\i=1..n ~B_i
+/\ \/i=1..n (A_i (+) S_i)
+
+// vim:ft=regstab

@@ -366,7 +366,20 @@ BOOL lrpo(Term s, Term t, BOOL lex_order_vars)
     else
       return occurs_in(t, s);  /* s > var iff s properly contains that var */
   }
-
+	/***********************Modif ***********/
+ /* else if(succ_occurs_in(s) && !succ_occurs_in(t)){
+	  //printf("t1 "); p_term(alpha);printf("t1 ");
+	  //printf("t2 "); p_term(beta); printf("t2 "); 
+	  return TRUE;
+  }
+  else if(!succ_occurs_in(s) && succ_occurs_in(t)){
+	  //printf("k1 "); p_term(alpha);printf("k1 ");
+	  //printf("k2 "); p_term(beta); printf("k2 ");
+	  
+	  return FALSE;
+  }*/
+	
+	/*................... End Modif.....................*/
   else if (SYMNUM(s) == SYMNUM(t) &&
 	   sn_to_lrpo_status(SYMNUM(s)) == LRPO_LR_STATUS)
     /* both have the same "left-to-right" symbol. */
@@ -412,33 +425,33 @@ Symbols are written as constants; arity is deduced from the symbol table.
 /* PUBLIC */
 void init_kbo_weights(Plist weights)
 {
-  Plist p;
-  for (p = weights; p; p = p->next) {
-    Term t = p->v;
-    if (!is_eq_symbol(SYMNUM(t)))
-      fatal_error("init_kbo_weights, not equality");
-    else {
-      Term a = ARG(t,0);
-      Term b = ARG(t,1);
-      if (!CONSTANT(a))
-	fatal_error("init_kbo_weights, symbol not constant");
-      else {
-	int wt = natural_constant_term(b);
-	if (wt == -1)
-	  fatal_error("init_kbo_weights, weight not natural");
-	else {
-	  char *str = sn_to_str(SYMNUM(a));
-	  int symnum = function_or_relation_sn(str);
-	  if (symnum == -1) {
-	    char mess[200];
-	    sprintf(mess, "init_kbo_weights, symbol %s not found", str);
-	    fatal_error(mess);
-	  }
-	  set_kb_weight(symnum, wt);
+	Plist p;
+	for (p = weights; p; p = p->next) {
+		Term t = p->v;
+		if (!is_eq_symbol(SYMNUM(t)))
+			fatal_error("init_kbo_weights, not equality");
+		else {
+			Term a = ARG(t,0);
+			Term b = ARG(t,1);
+			if (!CONSTANT(a))
+				fatal_error("init_kbo_weights, symbol not constant");
+			else {
+				int wt = natural_constant_term(b);
+				if (wt == -1)
+					fatal_error("init_kbo_weights, weight not natural");
+				else {
+					char *str = sn_to_str(SYMNUM(a));
+					int symnum = function_or_relation_sn(str);
+					if (symnum == -1) {
+						char mess[200];
+						sprintf(mess, "init_kbo_weights, symbol %s not found", str);
+						fatal_error(mess);
+					}
+					set_kb_weight(symnum, wt);
+				}
+			}
+		}
 	}
-      }
-    }
-  }
 }  /* init_kbo_weights */
 
 /*************
@@ -476,50 +489,65 @@ Is alpha kbo-greater-than beta?
 
 /* PUBLIC */
 BOOL kbo(Term alpha, Term beta, BOOL lex_order_vars)
-{
-  if (VARIABLE(alpha)) {
-    if (lex_order_vars)
-      return VARIABLE(beta) && VARNUM(alpha) > VARNUM(beta);
-    else
-      return FALSE;
-  }
-  else if (VARIABLE(beta)) {
-    if (lex_order_vars)
-      return TRUE;
-    else
-      return occurs_in(beta, alpha);
-  }
-  else if (ARITY(alpha) == 1 && ARITY(beta) == 1 &&
-	   SYMNUM(alpha) == SYMNUM(beta))
-    return kbo(ARG(alpha, 0), ARG(beta, 0), lex_order_vars);
-  else if (!variables_multisubset(beta, alpha))
-    return FALSE;
-  else {
-    int wa = kbo_weight(alpha);
-    int wb = kbo_weight(beta);
-    /* printf("kbo_weight=%d: ", wa); p_term(alpha); */
-    /* printf("kbo_weight=%d: ", wb); p_term(beta); */
-    if (wa > wb)
-      return TRUE;
-    else if (wa < wb)
-      return FALSE;
-    else if (!variables_multisubset(alpha, beta))
-      return FALSE;  /* if weights same, multisets of variables must be same */
-    else if (sym_precedence(SYMNUM(alpha), SYMNUM(beta)) == GREATER_THAN)
-      return TRUE;
-    else if (SYMNUM(alpha) != SYMNUM(beta))
-      return FALSE;
-    else {
-      /* Call KBO on first arguments that differ. */
-      int i = 0;
-      while (i < ARITY(alpha) && term_ident(ARG(alpha,i),ARG(beta,i)))
-	i++;
-      if (i == ARITY(alpha))
-	return FALSE;
-      else
-	return kbo(ARG(alpha,i), ARG(beta,i), lex_order_vars);
-    }
-  }
+{  
+	
+	if (VARIABLE(alpha)) {
+		if (lex_order_vars)
+			return VARIABLE(beta) && VARNUM(alpha) > VARNUM(beta);
+		else
+			return FALSE;
+	}
+	else if (VARIABLE(beta)) {
+		if (lex_order_vars)
+			return TRUE;
+		else
+			return occurs_in(beta, alpha);
+	}
+	/***********************Modif ***********/
+	 else if(succ_occurs_in(alpha) && !succ_occurs_in(beta)){
+	// printf("t1 "); p_term(alpha);printf("t1 ");
+	// printf("t2 "); p_term(beta); printf("t2 "); 
+	 return TRUE;
+	 }
+	 else if(!succ_occurs_in(alpha) && succ_occurs_in(beta)){
+	// printf("k1 "); p_term(alpha);printf("k1 ");
+	// printf("k2 "); p_term(beta); printf("k2 ");
+	 
+	 return FALSE;
+	 }
+	 
+	/*................... End Modif.....................*/
+	else if (ARITY(alpha) == 1 && ARITY(beta) == 1 &&
+			 SYMNUM(alpha) == SYMNUM(beta))
+		return kbo(ARG(alpha, 0), ARG(beta, 0), lex_order_vars);
+	else if (!variables_multisubset(beta, alpha))
+		return FALSE;
+	else {
+		int wa = kbo_weight(alpha);
+		int wb = kbo_weight(beta);
+		 //printf("kbo_weight=%d: ", wa); p_term(alpha); 
+		 //printf("kbo_weight=%d: ", wb); p_term(beta); 
+		if (wa > wb)
+			return TRUE;
+		else if (wa < wb)
+			return FALSE;
+		else if (!variables_multisubset(alpha, beta))
+			return FALSE;  /* if weights same, multisets of variables must be same */
+		else if (sym_precedence(SYMNUM(alpha), SYMNUM(beta)) == GREATER_THAN)
+			return TRUE;
+		else if (SYMNUM(alpha) != SYMNUM(beta))
+			return FALSE;
+		else {
+			/* Call KBO on first arguments that differ. */
+			int i = 0;
+			while (i < ARITY(alpha) && term_ident(ARG(alpha,i),ARG(beta,i)))
+				i++;
+			if (i == ARITY(alpha))
+				return FALSE;
+			else
+				return kbo(ARG(alpha,i), ARG(beta,i), lex_order_vars);
+		}
+	}
 }  /* kbo */
 
 /*************
@@ -535,10 +563,14 @@ Is alpha > beta in the current term ordering?  (LPR, RPO, KBO)
 /* PUBLIC */
 BOOL term_greater(Term alpha, Term beta, BOOL lex_order_vars)
 {
-  if (Ordering_method == KBO_METHOD)
+	//printf("t1 ");p_term(alpha);p_term(beta);printf("\n t1 ");
+	if (Ordering_method == KBO_METHOD){
+		
     return kbo(alpha, beta, lex_order_vars);
-  else
+	}
+	else{
     return lrpo(alpha, beta, lex_order_vars);  /* LPO, RPO, LRPO */
+	}
 }  /* term_greater */
 
 /*************
@@ -555,6 +587,7 @@ Return GREATER_THAN, LESS_THAN, SAME_AS, or NOT_COMPARABLE.
 /* PUBLIC */
 Ordertype term_order(Term alpha, Term beta)
 {
+	
   if (term_greater(alpha, beta, FALSE))
     return GREATER_THAN;
   else if (term_greater(beta, alpha, FALSE))

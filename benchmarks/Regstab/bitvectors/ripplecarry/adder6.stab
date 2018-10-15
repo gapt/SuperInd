@@ -1,0 +1,11 @@
+// Unicity of the result
+//expected: unsat
+
+let Sum(A,B,S,C,i)   := S_i <-> (A_i (+) B_i (+) C_i) in
+let Carry(A,B,C,i)   := C_i+1 <-> (A_i /\ B_i \/ C_i /\ A_i \/ C_i /\ B_i) in
+let Adder(A,B,S,C,n) := /\i=1..n (Sum(A,B,S,C,i) /\ Carry(A,B,C,i)) /\ ~C_1 in
+let Different(X,Y)   := \/i=1..n (X_i (+) Y_i) in
+
+Adder(A1,A2,S,C,n) /\ Adder(A1,A2,S',C',n) /\ (Different(S,S') \/ Different(C,C'))
+
+// vim:ft=regstab

@@ -2117,4 +2117,215 @@ Plist free_vars_term(Term t, Plist vars)
   }
   return vars;
 }  /* free_vars_term */
+/**************************************MODIF******/
+/* DOCUMENTATION
+ This function checks if an atom contains \alpha  */
 
+/* PUBLIC */
+BOOL param_term(Term a)
+{
+	return is_param_symbol(SYMNUM(a));
+}  /* param_term */
+/**************************************************/
+/* DOCUMENTATION
+ This function checks if an atom contains \alpha  */
+
+/* PUBLIC */
+BOOL succ_term(Term a)
+{
+	return is_succ_symbol(SYMNUM(a));
+}  /* param_term */
+/**************************************************/
+
+/*
+ create a term of the form s(s(s(x))) when we call shift(3,symbol_private(x))
+ */
+Term shift(int J, Term x){
+	if (J>0) {
+		return build_unary_term(str_to_sn("s", 1), shift(J-1, x));
+	}else {
+		return x;
+	}
+}
+/*
+ takes a parameter term and add a shift on it 
+ */
+Term var_term(Term a){
+		
+		if(VARIABLE(a)){
+			//int X = a->private_symbol;/*Symbol correspondant à la variable*/
+			//free_term(p->args[0]);
+			//printf(" sisi ");p_term(shift(J, a));printf(" %d ", J);
+			//zap_term(a);
+			//a=shift(J, a);
+			//printf(" sisi ");p_term(a);
+			return a;
+		}
+		else{
+			if(!CONSTANT(a)){
+				//printf("c");p_term(a);
+				return var_term(a->args[0]);
+				
+			}
+			else {
+				fatal_error("var_term : Constant");
+			}
+
+			
+		}
+}
+
+BOOL variable_term(Term a){
+	
+	if(VARIABLE(a)){
+		
+		return TRUE;
+	}
+	else{
+		if(!CONSTANT(a)){
+			//printf("c");p_term(a);
+			return variable_term(ARG(a, 0));
+			
+		}
+		else {
+			return FALSE;
+		}
+		
+		
+	}
+}
+
+
+
+/*........................................*/
+BOOL pureparam_cst_term(Term t){
+	if (CONSTANT(t)) {
+		return TRUE;
+		
+	}else {
+		if(VARIABLE(t))
+			return FALSE;
+		else
+			return pureparam_cst_term(ARG(t,0));
+	}
+
+}
+
+/* DOCUMENTATION
+ This function checks if succ  occurs in a Term t 
+ Tests when a literal is of the form : N(t),
+    */
+
+/* PUBLIC */
+BOOL only_succ_occurs_in(Term t)
+{
+	if (succ_term(t)){
+		return only_succ_occurs_in(ARG(t,0));
+	}
+	else {
+		if (VARIABLE(t) || CONSTANT(t)) {
+			return TRUE;
+		}else{
+			return FALSE;
+		}
+	}
+}  /* occurs_in */
+
+/**/
+BOOL succ_occurs_in(Term t){
+
+	if (succ_term(t))
+		return TRUE;
+	else {
+		if(VARIABLE(t)|| CONSTANT(t))
+			return FALSE;
+		else{
+			int i;
+			for (i = 0; i < ARITY(t); i++){
+				if (succ_occurs_in(ARG(t,i)))
+					return TRUE;
+			}
+			return FALSE;
+		}
+	}
+}  /* succ_occurs_in */
+
+
+/* PUBLIC */
+/*
+ Check whether succ occurs once or not in t.
+ */
+BOOL succ_occurs_once(Term t)
+{
+	if (succ_term(t))
+		return (VARIABLE(ARG(t,0)) || CONSTANT(ARG(t,0)));
+	else {
+		if(VARIABLE(t)|| CONSTANT(t))
+			return FALSE;
+		else{
+			int i;
+			for (i = 0; i < ARITY(t); i++){
+				if (!succ_occurs_once(ARG(t,i)))
+					return FALSE;
+			}
+			return FALSE;
+		}
+	}
+}  /* occurs_in */
+/*
+ Check whether succ occurs once or less in t.
+ */
+BOOL regular_term(Term t)
+{
+	if (succ_term(t))
+		return (VARIABLE(ARG(t,0)) || CONSTANT(ARG(t,0)));
+	else {
+		if(VARIABLE(t)|| CONSTANT(t))
+			return TRUE;
+		else{
+			int i;
+			for (i = 0; i < ARITY(t); i++){
+				if (!regular_term(ARG(t,i)))
+					return FALSE;
+			}
+			return TRUE;
+		}
+	}
+}  /* occurs_in */
+
+/*************
+ *
+ *  fprint_term(fp, t)
+ *
+ *************/
+
+/* DOCUMENTATION
+ This routine prints (to FILE *fp) a term .  A newline is NOT printed.
+ the usual operation such as multiplication are printed infixed 
+ */
+
+/* PUBLIC */
+void fprint_term_infix(FILE *fp, Term t)
+{
+	if (t == NULL)
+		fprintf(fp, "fprint_term: NULL term\n");
+	else {
+		if (VARIABLE(t))
+			fprintf(fp, "v%d", VARNUM(t));
+		else {
+				fprint_sym(fp, SYMNUM(t));
+			
+			if (COMPLEX(t)) {
+				int i;
+				fprintf(fp, "(");
+				for (i = 0; i < ARITY(t); i++) {
+					fprint_term(fp, ARG(t,i));
+					if (i < ARITY(t)-1)
+						fprintf(fp, ",");
+				}
+				fprintf(fp, ")");
+			}
+		}
+	}
+	fflush(fp);
+}  /* fprint_term_infix */

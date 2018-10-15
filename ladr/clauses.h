@@ -56,5 +56,6 @@ int most_literals(Plist clauses);
 BOOL pos_equality_in_clauses(Plist clauses);
 
 BOOL equality_in_clauses(Plist clauses);
+BOOL is_alpha_clause(Topform clause);
 
 #endif  /* conditional compilation of whole file */

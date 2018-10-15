@@ -1,0 +1,17 @@
+// Totality: n1 > n2 \/ n2 >= n1
+//expected: unsat
+
+let LowerOrEqual(Temp,X,Y,n)   := Temp_n /\ Temp_0 /\ /\i=1..n (Temp_i <-> ((X_i <-> Y_i) /\ Temp_i-1 \/ ~X_i /\ Y_i)) in
+
+let Different(Temp,X,Y,n)      := \/i=1..n (X_i (+) Y_i) in
+let LowerThan(Temp,X,Y,n)      := LowerOrEqual(Temp,X,Y,n) /\ Different(Temp,X,Y,n) in
+let GreaterOrEqual(Temp,X,Y,n) := LowerOrEqual(Temp,Y,X,n) in
+
+
+LowerThan(T1,A,B,n) /\ GreaterOrEqual(T2,A,B,n)
+
+// vim:ft=regstab
+
+
+let Equal(Temp,X,Y,n)          := /\i=1..n (X_i <-> Y_i) in
+let GreaterThan(Temp,X,Y,n)    := LowerThan(Temp,Y,X,n) in

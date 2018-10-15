@@ -69,7 +69,7 @@ struct topform {
   /* for formulas only */
 
   Formula          formula;
-
+  
   int   semantics;        /* evaluation in interpretations */
 
   /* The rest of the fields are flags.  These could be bits. */
@@ -81,6 +81,10 @@ struct topform {
   char   initial;         /* existed at the start of the search */
   char   neg_compressed;  /* negative and compressed */
   char   subsumer;        /* has this clause back subsumed anything? */
+	
+  int	rank; /* the level of the clause */
+  BOOL var_term;	
+  Ilist ancestors;
 
 };
 
@@ -152,4 +156,44 @@ Ordertype cl_id_compare(Topform c1, Topform c2);
 
 Ordertype cl_wt_id_compare(Topform c1, Topform c2);
 
+/*********************************************************************/
+void init_rank(Topform p);
+
+int get_rank(Topform p);
+
+int compute_rank(Topform p);
+
+BOOL param_free(Topform p);
+
+//void add_ancestors(Topform p1, Topform p2, Topform p);
+
+void print_ancestors(Topform p);
+
+BOOL bottom_clause(Topform p);
+
+Topform shift_cl(Topform p, int J);
+
+BOOL pureparam_cst_topform(Topform p);
+
+Topform topform_without_param(Topform c);
+
+BOOL clause_ident_order(Topform p1, Topform p2);
+
+BOOL loop_clause(Topform p);
+
+BOOL not_const_param(Topform c);
+
+BOOL get_var_term(Topform c);
+
+BOOL alpha_C_clause(Topform c);
+
+Topform build_loop_clause(Topform p);
+
+//order by rank
+
+Ordertype cl_rank_compare(Topform c1, Topform c2);
+
+void fprint_clause_param(FILE *fp, Topform c);
+
+void p_clause_param(Topform c);
 #endif  /* conditional compilation of whole file */

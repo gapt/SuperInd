@@ -33,6 +33,7 @@
 #include "giv_select.h"
 #include "white_black.h"
 #include "utilities.h"
+#include "loop.h"
 
 /* INTRODUCTION
 */
@@ -62,8 +63,22 @@ void free_search_memory(void);
 
 void zap_prover_results(Prover_results results);
 
+/************************ Modif *************************/
+BOOL fixed_point2(int I, int J, Plist Si, Plist Sij, Plist EmptyCl);
+
+//BOOL fixed_point_alg(int I, int J, Clist sos, Clist usable, Plist EmptyCl);
+
+BOOL fixed_point(int I, int J, Clist sos, Clist usable);
+
+BOOL fixed_point1(int I, int J, Plist Sinit, Plist Sloop, Plist Sij, BOOL index_flat);
+
+/************************ End of Modif **********************/
+
 Prover_results search(Prover_input p);
 
 Prover_results forking_search(Prover_input input);
+
+/******** MODIF ******************************/
+int rand_i_j(int i, int j);
 
 #endif  /* conditional compilation of whole file */

@@ -49,6 +49,10 @@ static unsigned Symbol_count;
 /* Logic symbols when in Term form */
 
 static char *True_sym   =  "$T";
+//************************ Modif*/
+static char *Succ_sym      =  "s"; /* "N(x)" means "alpha != x" */
+static char *Param_sym      =  "N"; 
+/************************************/
 static char *False_sym  =  "$F";
 static char *And_sym    =  "&";
 static char *Or_sym     =  "|";
@@ -3004,3 +3008,33 @@ Ilist symnums_of_arity(Ilist p, int i)
   }
 }  /* symnums_of_arity */
 
+/************************************** Modif *************************************/
+/* PUBLIC */
+/* return param symbol*/
+char *param_sym()
+{
+	return Param_sym;
+}  /* eq_sym */
+/***************************************************************************/
+static int Param_symnum = 0;
+BOOL is_param_symbol(int symnum){
+	if (Param_symnum == 0) {
+		Param_symnum = str_to_sn(param_sym(), 1);
+	}
+	return (symnum == Param_symnum ? TRUE : FALSE);
+}
+
+
+/* return succ symbol*/
+char *succ_sym()
+{
+	return Succ_sym;
+}  /* eq_sym */
+/***************************************************************************/
+static int Succ_symnum = 0;
+BOOL is_succ_symbol(int symnum){
+	if (Succ_symnum == 0) {
+		Succ_symnum = str_to_sn(succ_sym(), 1);
+	}
+	return (symnum == Succ_symnum ? TRUE : FALSE);
+}

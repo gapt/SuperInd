@@ -1,0 +1,70 @@
+% 	Theo: A + 0 = A
+%	============================== PROOF =================================
+%	% Cycle1 et Cycle2
+%	% Proof 1 at 0.01 (+ 0.00) seconds.
+%	% Given clauses 102.
+%	
+%	% number of calls to fixpoint : 4 
+%	 S_init  : 
+%	 (67:  [ S3(v0) | $C$(v0) if  n = s(v0) ].
+%	50:  [ S2(v0) if  n = s(v0) ].
+%	49:  [ S1(v0) if  n = s(v0) ].
+%	) 
+%	 S_loop  : 
+%	 (91:  [ S3(v0) | $C$(v0) if  n = s(s(v0)) ].
+%	71:  [ S2(v0) if  n = s(s(v0)) ].
+%	69:  [ S1(v0) if  n = s(s(v0)) ].
+%	) 
+%	 The empty clauses  : 
+%	 (52:  [  n = 0 ].
+%	75:  [  n = s(0) ].
+%	99:  [  n = s(s(0)) ].
+%	) max_rank 3 
+%	
+%	============================== end of proof ==========================
+%	
+%	============================== STATISTICS ============================
+%	
+%	Given=102. Generated=255. Kept=115. proofs=1.
+%	Usable=71. Sos=5. Demods=0. Limbo=0, Disabled=79. Hints=0.
+%	Kept_by_rule=0, Deleted_by_rule=0.
+%	Forward_subsumed=128. Back_subsumed=39.
+%	Sos_limit_deleted=0. Sos_displaced=0. Sos_removed=0.
+%	New_demodulators=0 (0 lex), Back_demodulated=0. Back_unit_deleted=0.
+%	Demod_attempts=0. Demod_rewrites=0.
+%	Res_instance_prunes=0. Para_instance_prunes=0. Basic_paramod_prunes=0.
+%	Nonunit_fsub_feature_tests=181. Nonunit_bsub_feature_tests=163.
+%	Megabytes=0.22.
+%	User_CPU=0.01, System_CPU=0.00, Wall_clock=0.
+
+%	============================== end of statistics =====================
+%assign(max_weight, 15).
+set(prolog_style_variables). 
+assign(max_given, 2300).
+set(raw).
+set(index_flat).
+%set(print_gen).
+set(superind).
+%set(cycle2).
+set(random_loopdet).
+clear(sat).
+%assign(start_rank, 3).
+set(rank_given).
+set(binary_resolution).
+set(ordered_res).
+set(back_subsume).
+assign(order, kbo).
+clear(predicate_elim).
+
+
+formulas(sos).
+( ( N(X) | S1(X) ) & -C(s(0))  ) & ( ( N(X) | S2(X) )  ) & ( ( N(X) | S3(X) )  )  .  
+S1(0) <-> $T  .
+S1(s(X)) <-> ( S1(X) & ( ( S(s(X)) <-> -( - (A(s(X)) <-> B(s(X)) ) <-> C(s(X)))  ) & ( $C$(s(X)) <-> (A(s(X)) & B(s(X)) | C(s(X)) & A(s(X)) | C(s(X)) & B(s(X)))  ) ) )  .
+S2(0) <-> $T  .
+S2(s(X)) <-> ( S2(X) & -B(s(X)) )  .
+S3(0) <-> $F  .
+S3(s(X)) <-> ( S3(X) | - (A(s(X)) <-> S(s(X))) )  .
+C(s(X))  <->  $C$(X)  .
+
+end_of_list.

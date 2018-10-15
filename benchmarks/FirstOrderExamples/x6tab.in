@@ -1,0 +1,16 @@
+%Unsat NOT OK
+assign(max_weight, 100).
+set(binary_resolution).
+set(print_gen).
+clear(neg_binary_resolution).
+assign(literal_selection, none).
+predicate_order([ N, = ]).
+clear(process_initial_sos).
+clear(predicate_elim).
+formulas(sos).
+t(s(u)) = store(store(t(u),i(u),select(t(u),j(u))),j(u), select(t(u),i(u))).
+select(t(0), 3)=6.
+N(u) | select(t(u), y) != 6.
+x != y | select(store(r, x , v) , y ) = v.
+x = y | select(store(r, x , v) , y ) = select(r,y).
+end_of_list.

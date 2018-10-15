@@ -468,12 +468,12 @@ Term mindex_retrieve_first(Term t, Mindex mdx, Querytype qtype,
 			   Mindex_pos *ppos)
 {
   Mindex_pos pos;
-
   if ((mdx->index_type == DISCRIM_WILD || mdx->index_type == DISCRIM_BIND) &&
       qtype != GENERALIZATION)
     return NULL;
 
   else {
+	  
     pos = get_mindex_pos();
     pos->index = mdx;
     pos->query_type = qtype;
@@ -485,7 +485,6 @@ Term mindex_retrieve_first(Term t, Mindex mdx, Querytype qtype,
     pos->btu_position = NULL;
     pos->btm_position = NULL;
     pos->partial_match = partial_match;
-
     if (mdx->index_type == FPA)
       pos->fpa_position = NULL;
     else if (mdx->index_type == DISCRIM_WILD)
@@ -494,7 +493,6 @@ Term mindex_retrieve_first(Term t, Mindex mdx, Querytype qtype,
       pos->discrim_position = NULL;
     else if (mdx->index_type == LINEAR)
       pos->linear_position = mdx->linear_first;
-
     *ppos = pos;
     return mindex_retrieve_next(pos);
   }

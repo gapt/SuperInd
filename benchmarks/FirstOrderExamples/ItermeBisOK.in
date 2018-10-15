@@ -1,0 +1,34 @@
+set(prolog_style_variables).
+
+set(raw).
+assign(max_given, 30).
+set(binary_resolution).
+%set(paramodulation).
+set(ordered_para).
+assign(order, kbo).
+set(print_gen).
+set(ordered_res).
+assign(max_depth, 5).
+%assign(max_literals,4).
+set(superind).
+predicate_order([ N, Si, q, p ]).
+
+clear(sat).
+set(rank_given).
+%set(breadth_first).
+assign(literal_selection, none).
+clear(predicate_elim).
+formulas(sos).
+N(X) | -Si(X,Y) | -p(Y).
+p(X) | -q(X,Y) .
+
+q(nil, X).
+q(cons(X,Y), X) | -q(Y,X) .
+
+Si(0,nil).
+Si(s(X), cons(a,Y)) | -Si(X,Y).
+
+
+end_of_list.
+
+

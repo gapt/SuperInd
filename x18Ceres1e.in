@@ -1,0 +1,35 @@
+set(prolog_style_variables).
+assign(max_given, 100).
+
+set(raw).
+set(rank_given).
+%set(print_gen).
+%set(back_subsume). 
+%set(back_demod).
+set(cac_redundancy).
+%assign(max_depth, 4).
+
+set(ordered_res). 
+%set(paramodulation).
+set(binary_resolution).
+assign(order, kbo).
+assign(literal_selection, none).
+clear(predicate_elim).
+
+
+
+formulas(sos).
+(r(0) & p(Z)) -> p(f(g(0,Z))).
+-q(0).
+-r(s(X)) | r(X).
+(r(s(X)) & p(g(X,Z )) ) -> p(f(g(X,Z))).
+-q(s(X)) | r(s(X)).
+p(a).
+-(q(s(X)) & p(f(g(X, a))) ).
+e(g(0,Z), Z).
+e(g(s(X), Z), f(g(X,Z)) ).
+e(X,X).
+N(X) | q(X).
+end_of_list.
+
+

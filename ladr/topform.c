@@ -1,4 +1,4 @@
-/*  Copyright (C) 2006, 2007 William McCune
+		 /*  Copyright (C) 2006, 2007 William McCune
 
     This file is part of the LADR Deduction Library.
 
@@ -18,8 +18,7 @@
 
 #include "topform.h"
 
-/* Private definitions and types */
-
+/* Private definitions and types 
 /*
  * memory management
  */
@@ -40,6 +39,8 @@ static unsigned Topform_gets, Topform_frees;
 Topform get_topform(void)
 {
   Topform p = get_cmem(PTRS_TOPFORM);
+  init_ancestors_topform(p);
+	//p->ancestors= NULL;
   Topform_gets++;
   return(p);
 }  /* get_topform */
@@ -142,32 +143,33 @@ This routine prints a clause to a file.
 /* PUBLIC */
 void fprint_clause(FILE *fp, Topform c)
 {
-  if (c == NULL)
-    fprintf(fp, "fprint_clause: NULL clause\n");
-  else {
-    Literals lit;
-
-    if (c->id > 0)
-      fprintf(fp, "%d: ", c->id);
-
-    if (c->literals == NULL)
-      fprintf(fp, "%s", false_sym());
-    else {
-      for (lit = c->literals; lit != NULL; lit = lit->next) {
-	if (!lit->sign)
-	  fprintf(fp, "%s", not_sym());
-	fprint_term(fp, lit->atom);
+	
+	if (c == NULL)
+		fprintf(fp, "fprint_clause: NULL clause\n");
+	else {
+		Literals lit;
+		
+		if (c->id > 0){
+			fprintf(fp, "%d: ", c->id);
+		}
+		if (c->literals == NULL)
+			fprintf(fp, "%s", false_sym());
+		else {
+			for (lit = c->literals; lit != NULL; lit = lit->next) {
+				if (!lit->sign)
+					fprintf(fp, "%s", not_sym());
+				fprint_term(fp, lit->atom);
 #if 0
-	if (maximal_literal_check(lit))
-	  fprintf(fp, "[max]");
+				if (maximal_literal_check(lit))
+					fprintf(fp, "[max]");
 #endif
-	if (lit->next != NULL)
-	  fprintf(fp, " %s ", or_sym());
-      }
-    }
-    fprintf(fp, ".\n");
-  }
-  fflush(fp);
+				if (lit->next != NULL)
+					fprintf(fp, " %s ", or_sym());
+			}
+		}
+		fprintf(fp, ".\n");
+	}
+	fflush(fp);
 }  /* fprint_clause */
 
 /*************
@@ -757,9 +759,9 @@ before starting search)/
 */
 
 /* PUBLIC */
-BOOL initial_clause(Topform c)
+BOOL initial_clause(Topform p)
 {
-  return c->initial;
+  return p->initial;
 }  /* initial_clause */
 
 /*************
@@ -893,4 +895,483 @@ Ordertype cl_wt_id_compare(Topform c1, Topform c2)
   else
     return SAME_AS;
 }  /* cl_wt_id_compare */
+/*************************************   Modif   *********************************************/
 
+/* DOCUMENTATION
+ */
+
+/* ******************
+ *
+ *  get_rank()
+ *
+ *********************/
+
+int get_rank(Topform p){
+		return p->rank;
+	
+} /*get_rank */
+
+/* ******************
+ *
+ *  compute_rank()
+ *
+ *********************/
+/* Compute the rank of a clause
+ */
+int compute_rank(Topform p){
+	int depth_param =0;
+	int max_depth = 0;
+	BOOL N=FALSE;
+	//printf("couoooooooooooooooooo");
+
+	if (param_free(p)) {
+		
+		return -1;
+	}
+	else{
+		Literals lit;
+		Term t;
+	//printf("couoooooooooooooooooo");
+		for(lit = p->literals; lit != NULL; lit = lit->next){
+			
+			t = lit->atom;
+			if (param_term(t)){
+				depth_param = term_depth(t);
+								
+			}
+			else{
+					if (succ_occurs_in(t)){// if "s" occurs once 
+						
+						max_depth = 1;
+					}
+			}
+				
+		}
+		
+		
+	
+	//printf(" max_depth = %d ", max_depth);
+	//p_clause(p);
+	//printf("depth_param = %d ", depth_param);
+	return depth_param - max_depth - 1 ;
+	}
+}
+/*
+ check wether the para term is not a constant
+ */
+BOOL not_const_param(Topform c){
+	Literals lit;
+	Term t;
+	//BOOL B = TRUE;
+	for (lit = c->literals; lit != NULL; lit = lit->next){
+		t = lit->atom;
+		
+		if (param_term(t)){
+			//B=TRUE;
+			if(variable_term(t)){
+				return TRUE;
+			}
+		}
+		
+	}
+	
+	return FALSE;
+}
+/*Initialize the rank and the var_term*/
+void init_rank(Topform p){
+	p->rank=compute_rank(p);
+	p->var_term = not_const_param(p);
+}
+BOOL get_var_term(Topform c){
+	return c->var_term;
+}
+
+/* Retourne vrai si la clause n'a pas de parametre \alpha */
+BOOL param_free(Topform p){
+	Term t;
+	Literals lit;
+	if (p==NULL) {
+		return TRUE;
+	}
+	
+	for (lit = p->literals; lit != NULL; lit = lit->next){
+		t = lit->atom;
+		if (param_term(t)) {
+			return FALSE;
+		}
+	}
+	return TRUE;
+}
+
+/*********************/
+/* Retourne le nombre d'occurence du parametre*/
+int param_occurrences(Topform p){
+	Literals lit;
+	Term t;
+	int num = 0;
+	for (lit = p->literals; lit != NULL; lit = lit->next){
+		t = lit->atom;
+		if (param_term(t)) num++;
+	}
+	return num;
+}
+/* retourne vrai si la clause est normalisée */
+BOOL is_normalized(Topform p){
+	return (param_occurrences(p) < 2) ;
+	
+}
+
+
+/*********************
+     print_ancestors(Topform)
+**********************/
+void print_ancestors(Topform p){
+	p_ilist(p->ancestors);
+}
+/**********************/
+void init_ancestors_topform(Topform p){
+	p->ancestors = get_ilist();
+}
+
+/*................................*/
+BOOL bottom_clause(Topform p){
+	return p->rank == -1;
+}
+/*...................................*/
+/*
+ retourne shift(clause, J)
+ */
+Topform shift_cl(Topform p, int J){
+	
+	Topform c = copy_clause(p);
+	if(param_free(p)){
+		return c;
+	}
+	Term t;
+	int i =0;
+	Literals lit;
+	int rank=get_rank(p);
+	if (rank==NULL) {
+		init_rank(p);
+		rank = get_rank(p);
+	}
+	for (lit = c->literals; lit != NULL; lit = lit->next){
+		t = lit->atom;
+		//printf("i = %d ", i);
+		//p_term(t);
+		if (param_term(t)){
+			
+			if(variable_term(t)){
+				//int depth=term_depth(t);
+				int j = J-rank;
+				Term x= var_term(t);// save the index variable 
+				Term sx=shift(j, x);/* build the shift term with the index variable 
+									 of the form s^j(x)*/
+				//printf("J = %d ",j);
+				//printf("shift_term ");p_term(sx);printf("..\n");
+				lit->atom = subst_term(t, x, sx); // build the entire parameter shifted term of the form :
+				                                  // N(s^j(x)
+				//printf("shift_cl ");p_term(lit->atom);printf("..\n");
+				lit->sign= TRUE;
+				c->rank =  J;
+				upward_term_links(t, p);
+			}
+			
+
+			
+			                                                                                      
+
+			
+		}
+					i++;	
+		
+	}
+	//p_clause(c);
+return c;	
+	
+}
+/*......................................*/
+/*
+ renvoie une vrai si c'est une clause de la forme N(s^i(CST))
+ */
+BOOL pureparam_cst_topform(Topform p){
+	if(number_of_literals(p->literals)==1){
+		if (param_term(p->literals->atom)) {
+			return pureparam_cst_term(p->literals->atom);
+		}
+		else {
+			return FALSE;
+		}
+
+	}else{
+		return FALSE;
+	}
+	
+}
+
+
+
+/*
+ return the clause without param literal
+ */
+Topform topform_without_param(Topform c){
+	//printf("huu");
+	if (!param_free(c)) {
+		
+		Topform c1 = copy_clause(c);
+		c1->literals=remove_param_literals(c1->literals);
+		return c1;
+	}
+	else{
+		
+		return c;
+	}
+}
+/*...........................................*/
+/*
+ Return true if p1 et p1 are identical with literals not ordered in the same way i.e clause_ident fails
+ */
+BOOL clause_ident_order(Topform p1, Topform p2){
+	//printf("lits1 %d ", count_literal(p1->literals));
+	//printf("lits2 %d ", count_literal(p2->literals));
+	if(count_literal(p1->literals) == count_literal(p2->literals)){
+		//printf("literal_ident = %d \n", literals_ident(p1->literals, p2->literals));
+		return literals_ident(p1->literals, p2->literals);
+	}else {
+		
+		return FALSE;
+	}
+}
+/*
+ return true if the clause is of the form N(s^i(x)) i.e n < i.
+ */
+BOOL loop_clause(Topform p){
+	return loop_literals(p->literals);
+}
+/**/
+BOOL alpha_C_clause(Topform c){
+	
+		Literals lit;
+		Term t;
+		for (lit = c->literals; lit != NULL; lit = lit->next){
+			t = lit->atom;
+			if (param_term(t)) {
+				if(!only_succ_occurs_in(ARG(t,0)) ){
+					//printf("term prob =");
+					//p_term(t);
+					return FALSE;
+				}
+			}
+			else {
+				if(!regular_term(t)){
+					//printf("term prob =");
+					//p_term(t);
+					return FALSE;
+				}
+			}
+
+		}
+	return TRUE;
+}
+/***************************************build_loop_clause()***************/
+
+Topform build_loop_clause(Topform p){
+	Topform c = copy_clause_with_flags(p);
+	
+	c->rank = p->rank - 1;
+	Term t;
+	Literals lit;
+	for (lit = c->literals; lit != NULL; lit = lit->next){
+		t = lit->atom;
+		//printf("i = %d ", i);
+		p_term(t);
+		if (param_term(t)){
+			
+			if(variable_term(t)){
+				//int depth=term_depth(t);
+				
+				Term x= var_term(t);// save the index variable 
+				Term sx=shift(1, x);/* build the shift term with the index variable 
+									 of the form s^j(x)*/
+				//printf("J = %d ",j);
+				//printf("shift_term ");p_term(sx);printf("..\n");
+				Term Nsx = subst_term(t, x, sx); // build the entire parameter shifted term of the form :
+				
+				// N(s^j(x)
+				printf("shift_cl ");p_term(Nsx);printf("..\n");
+				
+				lit->atom = Nsx;
+				//printf(" res "); p_clause(res);
+
+			}
+			
+			
+			
+			
+			
+		}
+		
+	}
+	p_clause(c);
+	return c;
+}
+
+/*************
+ *
+ *   cl_rank_compare()
+ *
+ *************/
+
+/* DOCUMENTATION
+ */
+
+Ordertype cl_rank_compare2(Topform c1, Topform c2)
+{
+	if (c1->rank == NULL) {
+		init_rank(c1);
+	}
+	if (c2->rank == NULL) {
+		init_rank(c2);
+	}
+	if (c1->id == 117) {
+		printf("F ");
+		p_clause(c2);
+		printf(" F ");
+
+	}
+	if (c1->rank != -1 && c2->rank != -1) {
+		
+		if (c1->rank < c2->rank )
+			return LESS_THAN;
+		else if (c1->rank > c2->rank)
+			return GREATER_THAN;
+		else  if (c1->id < c2->id)
+			return LESS_THAN;
+		else if (c1->id > c2->id)
+			return GREATER_THAN;
+		else
+			return SAME_AS;
+		
+	}
+	else if (c1->id < c2->id)
+			return LESS_THAN;
+		else if (c1->id > c2->id)
+			return GREATER_THAN;
+		else
+			return SAME_AS;
+		
+	
+
+	
+} 
+// Return 
+Ordertype cl_rank_compare(Topform c1, Topform c2)
+{
+	if (c1->rank == NULL) {
+		init_rank(c1);
+	}
+	if (c2->rank == NULL) {
+		init_rank(c2);
+	}
+	if (c1->rank < c2->rank)
+		return LESS_THAN;
+	else if (c1->rank > c2->rank)
+		return GREATER_THAN;
+	else if (c1->id < c2->id)
+		return LESS_THAN;
+	else if (c1->id > c2->id)
+		return GREATER_THAN;
+	else
+		return SAME_AS;
+	
+	
+	
+	
+} 
+
+/*************
+ *
+ *   fprint_clause_param()
+ *
+ *************/
+
+/* DOCUMENTATION
+ This routine prints a clause to a file.
+ */
+
+/* PUBLIC */
+void fprint_clause_param(FILE *fp, Topform c)
+{
+	Term param;
+	int n_literals = 0;
+	if (c == NULL)
+		fprintf(fp, "fprint_clause: NULL clause\n");
+	else {
+		Literals lit;
+		
+		if (c->id > 0){
+			fprintf(fp, "%d: ", c->id);
+		}
+		if (c->literals == NULL)
+			fprintf(fp, "%s", false_sym());
+		else {
+			fprintf(fp, " [ ");
+			for (lit = c->literals; lit != NULL; lit = lit->next) {
+				n_literals++;
+				if (param_term(lit->atom)) {
+					param = lit->atom;
+					if (lit->next != NULL  && n_literals > 1)
+						fprintf(fp, " %s ", or_sym());
+				}
+				else{
+					if (eq_term(lit->atom)) {
+						fprint_term_infix(fp, ARG(lit->atom,0));
+						if (!lit->sign)
+							fprintf(fp, " != ");
+						else
+							fprintf(fp, " = ");
+						
+						fprint_term_infix(fp, ARG(lit->atom,1));
+						if (lit->next != NULL && !param_term(lit->next->atom))
+							fprintf(fp, " %s ", or_sym());
+					}
+					else{
+						if (!lit->sign)
+							fprintf(fp, "%s", not_sym());
+						
+						fprint_term_infix(fp, lit->atom);
+#if 0
+						if (maximal_literal_check(lit))
+							fprintf(fp, "[max]");
+#endif
+						if (lit->next != NULL && !param_term(lit->next->atom))
+							fprintf(fp, " %s ", or_sym());
+					}
+				}
+			}
+		}
+		if (n_literals > 1) {
+			fprintf(fp, " if "); 
+		}
+		fprintf(fp, " n = "); 
+		fprint_term(fp, ARG(param,0));
+		fprintf(fp, " ].\n");
+	}
+	fflush(fp);
+}  /* fprint_clause */
+
+/*************
+ *
+ *   p_clause_param()
+ *
+ *************/
+
+/* DOCUMENTATION
+ This routine prints a clause to stdout.
+ */
+
+/* PUBLIC */
+void p_clause_param(Topform c)
+{
+	fprint_clause_param(stdout, c);
+}  /* p_clause */

@@ -1,0 +1,30 @@
+%Simple example from Spass-FD
+% Sat
+set(prolog_style_variables). 
+assign(max_given, 20).
+%set(raw).
+set(index_flat).
+set(print_gen).
+set(superind).
+%set(cycle2).
+set(rank_given).
+assign(start_rank, 1).
+set(binary_resolution).
+set(ordered_res).
+set(paramodulation).
+set(back_subsume).
+assign(order, kbo).
+clear(predicate_elim).
+list(kbo_weights).
+s = 3.
+end_of_list.
+
+formulas(sos).
+N(X) | somme(X) != s(0).
+somme(0) = s(0).
+A = somme(X) -> somme(s(X)) = s(A).
+
+
+
+
+end_of_list.

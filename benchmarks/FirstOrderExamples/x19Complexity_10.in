@@ -1,0 +1,66 @@
+% Unsat OK
+%	============================== PROOF =================================
+%	
+%	% Proof 1 at 0.01 (+ 0.01) seconds.
+%	% Given clauses 84.
+%	
+%	% number of calls to fixpoint : 4 
+%	 S_init  : 
+%	 (65:  [ g(t(v0)) != t(0) if  n = s(v0) ].
+%	66:  [ t(0) != t(v0) if  n = s(v0) ].
+%	) 
+%	 S_loop  : 
+%	 (124:  [ t(0) != t(v0) if  n = s(s(v0)) ].
+%	88:  [ g(t(v0)) != t(0) if  n = s(s(v0)) ].
+%	) 
+%	 The empty clauses  : 
+%	 (41:  [  n = 0 ].
+%	67:  [  n = s(0) ].
+%	106:  [  n = s(s(0)) ].
+%	) max_rank 3 
+%	
+%	============================== end of proof ==========================
+%	
+%	============================== STATISTICS ============================
+%	
+%	Given=84. Generated=258. Kept=172. proofs=1.
+%	Usable=83. Sos=76. Demods=4. Limbo=0, Disabled=26. Hints=0.
+%	Kept_by_rule=0, Deleted_by_rule=0.
+%	Forward_subsumed=86. Back_subsumed=10.
+%	Sos_limit_deleted=0. Sos_displaced=0. Sos_removed=0.
+%	New_demodulators=4 (0 lex), Back_demodulated=3. Back_unit_deleted=0.
+%	Demod_attempts=2112. Demod_rewrites=36.
+%	Res_instance_prunes=0. Para_instance_prunes=0. Basic_paramod_prunes=0.
+%	Nonunit_fsub_feature_tests=1419. Nonunit_bsub_feature_tests=573.
+%	Megabytes=0.30.
+%	User_CPU=0.01, System_CPU=0.01, Wall_clock=0.
+%	
+%	============================== end of statistics =====================
+%	
+
+%assign(max_seconds, 1).
+%set(raw).
+set(back_subsume). 
+set(back_demod).
+set(cac_redundancy).
+%clear(auto_inference).
+set(prolog_style_variables).
+%set(print_gen).
+%set(index_flat).
+%set(cycle2).
+set(binary_resolution).
+set(paramodulation).
+set(ordered_res).
+set(ordered_para).
+assign(max_given, 100).
+assign(literal_selection, none).
+%predicate_order([N,>]).
+
+formulas(sos).
+N(X) | (t(X) != f(a,T1,T2,T3,T4,T5,T6,T7,T8,T9) & t(X) != f(T1, a, T2,T3,T4,T5,T6,T7,T8,T9)  & t(X) != f(T1,T2,a,T3,T4,T5,T6,T7,T8,T9)  & t(X) != f(T1,T2,T3, a,T4,T5,T6,T7,T8,T9)  & t(X) != f(T1,T2,T3,T4,a,T5,T6,T7,T8,T9)  & t(X) != f(T1,T2,T3,T4,T5,a,T6,T7,T8,T9)  & t(X) != f(T1,T2,T3,T4,T5,T6,a,T7,T8,T9)  & t(X) != f(T1,T2,T3,T4,T5,T6,T7,a,T8,T9)  & t(X) != f(T1,T2,T3,T4,T5,T6,T7,T8,a,T9)  & t(X) != f(T1,T2,T3,T4,T5,T6,T7,T8,T9,a)).
+
+t(X)!=f(Z,T1,T2,T3,T4,T5,T6,T7,T8,T9) | g(t(X)) = f(T1,Z,T2,T3,T4,T5,T6,T7,T8,T9).
+t(s(X)) = g(t(X)). 
+t(0) = f(a,T1,T2,T3,T4,T5,T6,T7,T8,T9).
+end_of_list.
+

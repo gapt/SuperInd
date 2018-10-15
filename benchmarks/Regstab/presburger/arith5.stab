@@ -1,0 +1,35 @@
+// 1 <= x+y <= 5 /\ x >= 3 /\ y >= 4
+//expected: unsat
+
+let LowerOrEqual(Temp,X,Y,n)   := Temp_n /\ Temp_0 /\ /\i=1..n (Temp_i <-> ((X_i <-> Y_i) /\ Temp_i-1 \/ ~X_i /\ Y_i)) in
+let Equal(Temp,X,Y,n)          := /\i=1..n (X_i <-> Y_i) in
+let Different(Temp,X,Y,n)      := \/i=1..n (X_i (+) Y_i) in
+let LowerThan(Temp,X,Y,n)      := LowerOrEqual(Temp,X,Y,n) /\ Different(Temp,X,Y,n) in
+let GreaterOrEqual(Temp,X,Y,n) := LowerOrEqual(Temp,Y,X,n) in
+let GreaterThan(Temp,X,Y,n)    := LowerThan(Temp,Y,X,n) in
+
+let Sum(A,B,S,C,i)   := S_i <-> (A_i (+) B_i (+) C_i) in
+let Carry(A,B,C,i)   := C_i+1 <-> (A_i /\ B_i \/ C_i /\ A_i \/ C_i /\ B_i) in
+let Adder(A,B,S,C,n) := /\i=1..n (Sum(A,B,S,C,i) /\ Carry(A,B,C,i)) /\ ~C_1 in
+
+let Zero(A,n)  := /\i=1..n ~A_i in
+let One(A,n)   :=  A_1 /\ /\i=1..n ~A_i+1 in
+let Two(A,n)   := ~A_1 /\  A_2 /\ /\i=1..n ~A_i+2 in
+let Three(A,n) :=  A_1 /\  A_2 /\ /\i=1..n ~A_i+2 in
+let Four(A,n)  := ~A_1 /\ ~A_2 /\ A_3 /\ /\i=1..n ~A_i+3 in
+let Five(A,n)  :=  A_1 /\ ~A_2 /\ A_3 /\ /\i=1..n ~A_i+3 in
+
+let LastBitNull() := ~X_n+1 /\ ~Y_n+1 in
+
+LastBitNull()
+/\ One(N1,n+1) /\ Five(N2,n+1) /\ Three(N3,n+1) /\ Four(N4,n+1)
+/\ Adder(X,Y,XpY,T1,n+1)
+/\ LowerOrEqual(T2,N1,XpY,n+1)
+/\ LowerOrEqual(T3,XpY,N2,n+1) 
+/\ GreaterOrEqual(T4,X,N3,n+1) 
+/\ GreaterOrEqual(T5,Y,N4,n+1)
+| n>=0
+
+// vim:ft=regstab
+
+

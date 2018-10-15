@@ -1,0 +1,30 @@
+set(prolog_style_variables).
+% generates N(s(0)) but not N(0) because of f(a,b) = d ...
+%set(raw).
+assign(max_given, 20).
+set(binary_resolution).
+set(paramodulation).
+clear(sat).
+set(ordered_para).
+%assign(order, kbo).
+set(print_gen).
+set(ordered_res).
+%assign(max_depth, 4).
+%assign(max_literals,4).
+set(superind).
+set(rank_given).
+%set(breadth_first).
+assign(literal_selection, none).
+clear(predicate_elim).
+formulas(sos).
+N(X) | P(Si(X)).
+Si(0) = f(a,b).
+Si(s(X)) = f(a,Si(X)).
+
+
+-P(cst).
+f(a,b) = d.
+f(a,d) = cst.
+end_of_list.
+
+

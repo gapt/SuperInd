@@ -1,0 +1,72 @@
+% 1 < 2
+============================== PROOF =================================
+
+% Proof 1 at 0.01 (+ 0.00) seconds.
+% Given clauses 123.
+
+% number of calls to fixpoint : 4 
+ S_init  : 
+ (59:  [ S3(v0) if  n = s(v0) ].
+) 
+ S_loop  : 
+ (118:  [ S3(v0) if  n = s(s(v0)) ].
+) 
+ The empty clauses  : 
+ (63:  [  n = 0 ].
+79:  [  n = s(0) ].
+117:  [  n = s(s(0)) ].
+) max_rank 3 
+
+============================== end of proof ==========================
+
+============================== STATISTICS ============================
+
+Given=123. Generated=366. Kept=157. proofs=1.
+Usable=93. Sos=11. Demods=0. Limbo=0, Disabled=97. Hints=0.
+Kept_by_rule=0, Deleted_by_rule=0.
+Forward_subsumed=194. Back_subsumed=53.
+Sos_limit_deleted=0. Sos_displaced=0. Sos_removed=0.
+New_demodulators=0 (0 lex), Back_demodulated=0. Back_unit_deleted=0.
+Demod_attempts=0. Demod_rewrites=0.
+Res_instance_prunes=0. Para_instance_prunes=0. Basic_paramod_prunes=0.
+Nonunit_fsub_feature_tests=282. Nonunit_bsub_feature_tests=197.
+Megabytes=0.25.
+User_CPU=0.01, System_CPU=0.00, Wall_clock=0.
+
+============================== end of statistics =====================
+
+
+assign(max_weight, 15).
+set(prolog_style_variables). 
+assign(max_given, 300).
+set(raw).
+set(index_flat).
+set(print_gen).
+set(superind).
+set(rank_given).
+set(binary_resolution).
+set(ordered_res).
+set(back_subsume).
+assign(order, kbo).
+assign(literal_selection, none).
+clear(predicate_elim).
+list(kbo_weights).
+s = 3.
+end_of_list.
+
+formulas(sos).
+( -A(s(0)) & $A$(s(0)) & ( N(X) | S1(X) )  ) & ( B(s(0)) & ( N(X) | S2(X) )  ) & ( ( ( N(X) | T(X) ) & T(0) & ( N(X) | S3(X) )  ) & ( ( N(X) | S4(X) )  )  )  .  
+S1(0) <-> $T  .
+S1(s(X)) <-> ( S1(X) & -$A$$(s(X)) )  .
+S2(0) <-> $T  .
+S2(s(X)) <-> ( S2(X) & -$B$(s(X)) )  .
+S3(0) <-> $T  .
+S3(s(X)) <-> ( S3(X) & (T(s(X)) <-> ((A(s(X)) <-> B(s(X))) & T(X) | -A(s(X)) & B(s(X)))) )  .
+S4(0) <-> $F  .
+S4(s(X)) <-> ( S4(X) | - (A(s(X)) <-> B(s(X))) )  .
+A(s(X))  <->  $A$(X)  .
+$A$(s(X))  <->  $A$$(X)  .
+B(s(X))  <->  $B$(X)  .
+-T(s(0)).
+
+end_of_list.
