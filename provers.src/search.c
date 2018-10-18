@@ -1506,38 +1506,6 @@ BOOL cl_process_delete(Topform c)
 		return TRUE;  // delete
 	}
 	
-	/**********MIDIF**********/
-	if (flag(Opt->superind)) {
-		
-		if(!(is_normalized(c)) || !alpha_C_clause(c)){
-			if(flag(Opt->print_gen)){
-				printf("not normalized \n");
-				
-			}
-			return TRUE;
-		}
-		if(get_rank(c)== -2){
-			if(flag(Opt->print_gen)){
-				printf("the m.g.u is at least of the form s(s(x)) \n");
-				Glob.admissible = FALSE;
-				p_clause(c);
-				printf("");
-			}
-			return TRUE;
-		}
-		if(get_rank(c)== -3){
-			if(flag(Opt->print_gen)){
-				printf("it's not an (alpha-C)- clause \n");
-				Glob.admissible = FALSE;
-				//printf("alpha C %d \n",alpha_C_clause(c));
-				printf("");
-				//p_clause(c);
-			}
-			
-			return TRUE;
-		}
-	}
-	/**********************/
 	clause_wt_with_adjustments(c);  // possibly sets c->matching_hint
 	
 	// White-black tests
