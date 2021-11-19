@@ -1,0 +1,13 @@
+*.o
+/provers.src/autosketches4
+/provers.src/fof-prover9
+/provers.src/ladr_to_tptp
+/mace4.src/libmace4.a
+/provers.src/newauto
+/provers.src/newsax
+/provers.src/prover9
+/provers.src/tptp_to_ladr
+/ladr/libladr.a
+/GPATH
+/GRTAGS
+/GTAGS
