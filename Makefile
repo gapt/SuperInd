@@ -6,7 +6,7 @@ all:
 	cd mace4.src    && $(MAKE) all
 	cd provers.src  && $(MAKE) all
 	cd apps.src     && $(MAKE) all
-	/bin/cp -p utilities/* bin
+	cp -p utilities/* bin
 	@echo ""
 	@echo "**** Now try 'make test1'. ****"
 	@echo ""
@@ -44,7 +44,7 @@ clean:
 
 realclean:
 	$(MAKE) clean
-	/bin/rm -f bin/*
+	rm -f bin/*
 
 
 # The following cleans up, then makes a .tar.gz file of the current

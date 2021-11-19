@@ -19,13 +19,13 @@ ladr:
 	cd ../ladr && $(MAKE) libladr.a
 
 clean:
-	/bin/rm -f *.o
+	rm -f *.o
 
 realclean:
-	/bin/rm -f *.o $(PROGRAMS)
+	rm -f *.o $(PROGRAMS)
 
 install:
-	/bin/mv $(PROGRAMS) ../bin
+	mv $(PROGRAMS) ../bin
 
 tags:
 	etags *.c ../ladr/*.c

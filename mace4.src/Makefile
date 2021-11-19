@@ -38,10 +38,10 @@ tags:
 	etags *.c ../ladr/*.c
 
 clean:
-	/bin/rm -f *.o
+	rm -f *.o
 
 realclean:
-	/bin/rm -f *.o *.a mace4
+	rm -f *.o *.a mace4
 
 install:
-	/bin/mv mace4 ../bin
+	mv mace4 ../bin

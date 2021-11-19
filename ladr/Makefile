@@ -47,10 +47,10 @@ dep:
 	util/make_dep $(OBJECTS)
 
 clean:
-	/bin/rm -f *.o
+	rm -f *.o
 
 realclean:
-	/bin/rm -f *.o *.a
+	rm -f *.o *.a
 
 protos:
 	util/make_protos $(OBJECTS)

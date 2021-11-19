@@ -42,13 +42,13 @@ libmace libmace4:
 	$(MAKE) clean
 
 install:
-	/bin/cp -p $(PROGRAMS) ../bin
+	cp -p $(PROGRAMS) ../bin
 
 clean:
-	/bin/rm -f *.o
+	rm -f *.o
 
 realclean:
-	/bin/rm -f *.o $(PROGRAMS)
+	rm -f *.o $(PROGRAMS)
 
 protos:
 	util/make_protos $(OBJECTS)
@@ -60,7 +60,7 @@ tags:
 	etags *.c ../ladr/*.c
 
 prover:
-	/bin/rm -f prover9
+	rm -f prover9
 	$(MAKE) prover9
 
 prover9: prover9.o $(OBJECTS)
